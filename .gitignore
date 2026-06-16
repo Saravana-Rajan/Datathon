@@ -1,12 +1,22 @@
 # === Yaksha / KSP Saathi root .gitignore ===
 
-# Secrets
+# Secrets — NEVER commit these
 .env
 .env.local
 .env.*.local
+.env.deployed
+.env.deploy
 *.pem
 *.key
 service-account*.json
+self_client*.json
+client_credentials*.json
+zoho-credentials*.json
+secrets/
+.zoho-secrets/
+oauth-tokens*.json
+*.refresh_token
+catalyst-credentials*.json
 
 # Large generated data — keep schema + sample, NOT full 50K records
 data/firs.jsonl
