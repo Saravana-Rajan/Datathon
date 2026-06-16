@@ -147,9 +147,9 @@ function adaptNode(n: StoreGraphNode): GraphRFNode {
             ? (props.connectionCount as number)
             : undefined,
         recentFirs: Array.isArray(
-          (props as { recentFirs?: unknown }).recentFirs
+          (props as unknown as { recentFirs?: unknown }).recentFirs
         )
-          ? ((props as { recentFirs: PersonNodeData["recentFirs"] }).recentFirs)
+          ? ((props as unknown as { recentFirs: PersonNodeData["recentFirs"] }).recentFirs)
           : undefined,
       };
       return {
@@ -165,8 +165,8 @@ function adaptNode(n: StoreGraphNode): GraphRFNode {
         crimeType: (props.crimeType as string) ?? "Unknown",
         date: (props.date as string) ?? "",
         station: (props.station as string) ?? undefined,
-        sections: Array.isArray((props as { sections?: unknown }).sections)
-          ? ((props as { sections: string[] }).sections)
+        sections: Array.isArray((props as unknown as { sections?: unknown }).sections)
+          ? ((props as unknown as { sections: string[] }).sections)
           : undefined,
       };
       return { id: n.id, type: "fir", data, position: { x: 0, y: 0 } };
@@ -538,7 +538,7 @@ export function NetworkGraph({
             : rf.type === "fir"
               ? (rf.data as FIRNodeData).firNo
               : (rf.data as StationNodeData).name,
-        payload: rf.data as Record<string, unknown>,
+        payload: rf.data as unknown as Record<string, unknown>,
       });
     },
     [pathMode, onNodeContext, storeNodes, storeEdges, edges]

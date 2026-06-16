@@ -241,14 +241,7 @@ export function ChatPanel({
       }
       processedRef.current.add(msg.id);
     }
-  }, [
-    messages,
-    isLoading,
-    setMapMarkers,
-    setGraphData,
-    setChartData,
-    recordAuditEntry,
-  ]);
+  }, [messages, isLoading, setMapMarkers, setGraph, appendAuditEntry]);
 
   // Smooth-scroll the message list to the bottom when new content arrives.
   const listRef = React.useRef<HTMLDivElement | null>(null);

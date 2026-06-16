@@ -347,3 +347,171 @@ incompatible.
 ---
 
 *Last updated: 2026-06-16.  Owner: Person A.*
+
+---
+
+# Neo4j criminal network ingestion — `neo4j_ingest.py` (Person C)
+
+Builds the graph that powers **Feature 5.5 — Criminal network visualization** (see `../../design.md`).
+
+Owner: **Person C** (Graph + Predictive).
+
+## What this builds
+
+```
+(Person {id, name, age, gender, centrality, case_count})
+(FIR {fir_no, crime_type, date_registered, status, ipc_sections, ...})
+(Station {name, lat, lng, district})
+(Location {h3_index, h3_resolution, lat, lng, text})
+
+(Person)-[:ACCUSED_IN]->(FIR)
+(Person)-[:COMPLAINANT_IN]->(FIR)
+(Person)-[:VICTIM_IN]->(FIR)
+(FIR)-[:AT_STATION]->(Station)
+(FIR)-[:OCCURRED_AT]->(Location)
+
+# Derived (computed post-ingest by derived_edges.py):
+(Person)-[:CO_ACCUSED_WITH {weight, sample_firs}]-(Person)
+(Person)-[:CO_LOCATED_WITH {count, sample_h3}]-(Person)
+```
+
+## Prerequisites
+
+1. **Neo4j AuraDB Free** account at https://console.neo4j.io. Create an instance in
+   **asia-south1 (Mumbai)** — keeps India data residency consistent with Catalyst.
+   Save the password (shown ONCE at creation).
+2. **Python 3.10+** and `pip install -r requirements.txt` (adds `neo4j>=5.18.0`
+   and `h3>=4.0.0`).
+3. **Environment variables**:
+   ```bash
+   # bash / Git Bash
+   export NEO4J_URI="neo4j+s://<your-id>.databases.neo4j.io"
+   export NEO4J_USER="neo4j"
+   export NEO4J_PASSWORD="<your-aura-password>"
+   ```
+   ```powershell
+   # PowerShell
+   $env:NEO4J_URI = "neo4j+s://<your-id>.databases.neo4j.io"
+   $env:NEO4J_USER = "neo4j"
+   $env:NEO4J_PASSWORD = "<your-aura-password>"
+   ```
+4. FIRs JSONL at `../../data/firs.jsonl` (Person A's output).
+
+## The 3-step run
+
+### Step 1 — Smoke test (100 rows, ~5s)
+```bash
+cd app/data-pipeline
+python neo4j_ingest.py --input ../../data/firs_sample.jsonl --limit 100
+```
+Validates connectivity, applies schema, ingests, derives edges, prints top-10 gang-hub candidates.
+
+### Step 2 — Mid-size validation (5K rows, ~30s)
+```bash
+python neo4j_ingest.py --input ../../data/firs.jsonl --limit 5000 --reset
+```
+`--reset` wipes the DB first so the smoke-test data doesn't pollute counts.
+
+### Step 3 — Full ingest (50K rows, ~5min)
+```bash
+python neo4j_ingest.py --input ../../data/firs.jsonl --reset
+```
+
+## Verification queries (paste into Neo4j Browser)
+
+Open Neo4j console → your instance → **Open with Neo4j Browser** → paste:
+
+```cypher
+-- Schema constraints exist (expect 4 rows)
+SHOW CONSTRAINTS;
+
+-- Node counts by label
+MATCH (n) RETURN labels(n)[0] AS label, count(n) AS n ORDER BY n DESC;
+
+-- Top gang hub's 2-hop network (switch to graph view)
+MATCH (p:Person)
+WITH p ORDER BY p.centrality DESC LIMIT 1
+MATCH path = (p)-[:CO_ACCUSED_WITH|CO_LOCATED_WITH*1..2]-(other)
+RETURN path LIMIT 100;
+
+-- Repeat offenders
+MATCH (p:Person)-[:ACCUSED_IN]->(f:FIR)
+WITH p, count(f) AS cases WHERE cases >= 5
+RETURN p.name, p.age, cases ORDER BY cases DESC LIMIT 20;
+
+-- DySP killer query: suspects active across multiple stations
+MATCH (p:Person)-[:ACCUSED_IN]->(f:FIR)-[:AT_STATION]->(s:Station)
+WITH p, count(DISTINCT s) AS stations, collect(DISTINCT s.name)[..5] AS sample
+WHERE stations >= 3
+RETURN p.name, stations, sample ORDER BY stations DESC LIMIT 10;
+```
+
+## Expected timings (AuraDB Free, asia-south1)
+
+| Rows    | Primary | Derived + centrality | Total       |
+|---------|--------:|---------------------:|------------:|
+|     100 |    ~3 s |                 ~2 s |       ~5 s  |
+|   5,000 |   ~25 s |                 ~5 s |      ~30 s  |
+|  50,000 |  ~4 min |                ~1 min|      ~5 min |
+
+## Known limitations (be honest in pitch)
+
+1. **Person identity is a soft key** (`lower(name) + "::" + age`). Real CCTNS lacks
+   a unique cross-station accused ID — this is the exact DySP pain point from
+   `design.md` Section 3. The resolver will under-merge and over-merge; swap the
+   `person_id()` function in `neo4j_ingest.py` when KSP supplies real IDs.
+2. **No GDS/APOC on AuraDB Free.** Centrality uses a portable Cypher proxy
+   (`case_count × log10(1 + co_accused_weight)`), not true PageRank.
+3. **H3 resolution fixed at 8** (~0.7 km² hexes). Tune `H3_RESOLUTION` if needed.
+4. **CO_LOCATED_WITH can explode on hot cells.** Fine for 50K, needs degree cap above 500K.
+
+## CLI reference
+
+```
+python neo4j_ingest.py --input PATH [options]
+  --input PATH          (required) JSONL of FIR records
+  --limit N             Max rows to ingest (default: all)
+  --batch N             Batch size for UNWIND (default: 500)
+  --reset               Wipe DB before ingest (DESTRUCTIVE)
+  --skip-derived        Don't compute CO_ACCUSED_WITH / CO_LOCATED_WITH
+  --skip-centrality     Don't compute centrality scores
+
+# Standalone re-run of derived stage (no re-ingest)
+python derived_edges.py [--only co_accused|co_located|centrality] [--top-n 100]
+```
+
+## Backend consumption (`cypher_queries.py`)
+
+The orchestrator's `cypher-generator` Function imports parameterized queries directly:
+
+```python
+from cypher_queries import find_criminal_network, find_similar_mo, \
+    gang_hubs_by_district, repeat_offenders
+
+cypher, params = find_criminal_network("Manpreet Chowdary", hops=2)
+with driver.session() as s:
+    records = list(s.run(cypher, **params))
+```
+
+Available queries:
+- `find_criminal_network(person_name, hops, limit)` — 1-3 hop traversal around a named person
+- `find_similar_mo(crime_type, days_back, district, limit)` — recent FIRs by crime type/area
+- `gang_hubs_by_district(district, limit, min_cases)` — top centrality persons in an area
+- `repeat_offenders(min_cases, crime_type, limit)` — Persons with N+ ACCUSED_IN edges
+- `fir_full_context(fir_no)` — one FIR + its 1-hop neighbourhood
+- `person_full_history(person_name, limit)` — every FIR a named person is accused in
+
+All queries are parameterized (injection-safe) and bounded by `LIMIT` (no runaway scans).
+
+## Troubleshooting (Neo4j)
+
+| Symptom | Fix |
+|---|---|
+| `AuthError: unauthorized` | Wrong password — AuraDB shows it ONCE; reset from console. |
+| `ServiceUnavailable: Failed to establish connection` | AuraDB Free auto-pauses after 3 days idle. Resume from console. |
+| Ingest hangs on first batch | Another query is running (free tier is single-tenant). Close Neo4j Browser tabs. |
+| Centrality score all 0 | You ran with `--skip-derived` or `--skip-centrality`. Re-run `python derived_edges.py`. |
+
+---
+
+*Neo4j section last updated: 2026-06-16.  Owner: Person C.*
