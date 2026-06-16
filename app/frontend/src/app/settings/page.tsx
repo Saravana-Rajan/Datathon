@@ -181,8 +181,8 @@ function SettingsPageInner() {
     setLanguagePref(
       readPref<LanguagePref>(SETTINGS_KEYS.language, language as LanguagePref)
     );
-    setVoiceEnabled(readPref(SETTINGS_KEYS.voiceEnabled, "1") === "1");
-    setDemoMode(readPref(SETTINGS_KEYS.demoMode, "0") === "1");
+    setVoiceEnabled(readPref<string>(SETTINGS_KEYS.voiceEnabled, "1") === "1");
+    setDemoMode(readPref<string>(SETTINGS_KEYS.demoMode, "0") === "1");
   }, [language]);
 
   // Persist + propagate.
