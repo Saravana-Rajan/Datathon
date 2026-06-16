@@ -1,0 +1,347 @@
+name: Deploy Yaksha to Catalyst
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip pytest (emergency rollouts only)'
+        required: false
+        default: 'false'
+        type: choice
+        options: [ 'false', 'true' ]
+      dry_run:
+        description: 'Dry-run (no real deploy)'
+        required: false
+        default: 'false'
+        type: choice
+        options: [ 'false', 'true' ]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CATALYST_PROJECT_ID: '47060000000020001'
+  CATALYST_ORG_ID: '60074155874'
+  CATALYST_REGION: 'in'
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # --------------------------------------------------------------------------
+  # 1. Test — pytest for every function, npm build dry-run for the frontend
+  # --------------------------------------------------------------------------
+  test:
+    name: Test (backend + frontend)
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.skip_tests != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/frontend/package-lock.json
+
+      - name: Install backend deps + run pytest per function
+        working-directory: app/backend
+        run: |
+          set -euo pipefail
+          # root requirements (if any)
+          if [ -f requirements.txt ]; then pip install -q -r requirements.txt; fi
+          # per-function deps + tests
+          for d in functions/*/; do
+            name=$(basename "$d")
+            echo "::group::Function $name"
+            if [ -f "$d/requirements.txt" ]; then
+              pip install -q -r "$d/requirements.txt"
+            fi
+            if ls "$d"/test_*.py "$d"/*_test.py >/dev/null 2>&1; then
+              (cd "$d" && python -m pytest -q --maxfail=1)
+            else
+              echo "(no tests in $name — skipping)"
+            fi
+            echo "::endgroup::"
+          done
+
+      - name: Frontend build (validates Next.js)
+        working-directory: app/frontend
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+  # --------------------------------------------------------------------------
+  # 2. Deploy backend — functions one at a time
+  # --------------------------------------------------------------------------
+  deploy-backend:
+    name: Deploy backend (functions)
+    needs: [test]
+    if: ${{ always() && (needs.test.result == 'success' || needs.test.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    outputs:
+      env_deployed: ${{ steps.collect.outputs.env_deployed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Catalyst CLI
+        run: npm install -g zcatalyst-cli
+
+      - name: Authenticate Catalyst CLI (non-interactive)
+        env:
+          CATALYST_REFRESH_TOKEN: ${{ secrets.CATALYST_REFRESH_TOKEN }}
+          CATALYST_CLIENT_ID:     ${{ secrets.CATALYST_CLIENT_ID }}
+          CATALYST_CLIENT_SECRET: ${{ secrets.CATALYST_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          # zcatalyst-cli reads ~/.catalystrc — write a session profile from the OAuth refresh token.
+          mkdir -p ~/.catalyst
+          cat > ~/.catalyst/credentials.json <<EOF
+          {
+            "refresh_token": "${CATALYST_REFRESH_TOKEN}",
+            "client_id": "${CATALYST_CLIENT_ID}",
+            "client_secret": "${CATALYST_CLIENT_SECRET}",
+            "region": "${{ env.CATALYST_REGION }}",
+            "org_id": "${{ env.CATALYST_ORG_ID }}",
+            "project_id": "${{ env.CATALYST_PROJECT_ID }}"
+          }
+          EOF
+          chmod 600 ~/.catalyst/credentials.json
+          # Verify
+          catalyst account list || { echo "Catalyst auth failed"; exit 2; }
+
+      - name: Run deploy-backend.sh
+        env:
+          EXPECTED_PROJECT_ID: ${{ env.CATALYST_PROJECT_ID }}
+          EXPECTED_ORG_ID:     ${{ env.CATALYST_ORG_ID }}
+          EXPECTED_REGION:     ${{ env.CATALYST_REGION }}
+        run: |
+          set -euo pipefail
+          chmod +x app/scripts/*.sh
+          FLAGS=""
+          if [ "${{ github.event.inputs.skip_tests }}" = "true" ]; then FLAGS="$FLAGS --skip-tests"; fi
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAGS="$FLAGS --dry-run"; fi
+          bash app/scripts/deploy-backend.sh $FLAGS
+
+      - name: Collect deployed URLs
+        id: collect
+        run: |
+          if [ -f app/.env.deployed ]; then
+            echo "env_deployed<<EOF" >> "$GITHUB_OUTPUT"
+            cat app/.env.deployed >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload deploy log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-deploy-log-${{ github.run_id }}
+          path: app/.deploy-logs/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # --------------------------------------------------------------------------
+  # 3. Deploy frontend — npm build + Web Client Hosting
+  # --------------------------------------------------------------------------
+  deploy-frontend:
+    name: Deploy frontend (web-client-hosting)
+    needs: [deploy-backend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/frontend/package-lock.json
+
+      - name: Install Catalyst CLI
+        run: npm install -g zcatalyst-cli
+
+      - name: Authenticate Catalyst CLI
+        env:
+          CATALYST_REFRESH_TOKEN: ${{ secrets.CATALYST_REFRESH_TOKEN }}
+          CATALYST_CLIENT_ID:     ${{ secrets.CATALYST_CLIENT_ID }}
+          CATALYST_CLIENT_SECRET: ${{ secrets.CATALYST_CLIENT_SECRET }}
+        run: |
+          mkdir -p ~/.catalyst
+          cat > ~/.catalyst/credentials.json <<EOF
+          {
+            "refresh_token": "${CATALYST_REFRESH_TOKEN}",
+            "client_id": "${CATALYST_CLIENT_ID}",
+            "client_secret": "${CATALYST_CLIENT_SECRET}",
+            "region": "${{ env.CATALYST_REGION }}",
+            "org_id": "${{ env.CATALYST_ORG_ID }}",
+            "project_id": "${{ env.CATALYST_PROJECT_ID }}"
+          }
+          EOF
+          chmod 600 ~/.catalyst/credentials.json
+          catalyst account list
+
+      - name: Restore backend URLs
+        run: |
+          mkdir -p app
+          cat > app/.env.deployed <<'EOF'
+          ${{ needs.deploy-backend.outputs.env_deployed }}
+          EOF
+
+      - name: Run deploy-frontend.sh
+        env:
+          NEXT_PUBLIC_API_BASE_URL:        ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+        run: |
+          chmod +x app/scripts/*.sh
+          FLAGS=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then FLAGS="$FLAGS --dry-run"; fi
+          bash app/scripts/deploy-frontend.sh $FLAGS
+
+      - name: Upload deploy log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-deploy-log-${{ github.run_id }}
+          path: app/.deploy-logs/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # --------------------------------------------------------------------------
+  # 4. Smoke test — verify deployed URLs return 200 + expected fields
+  # --------------------------------------------------------------------------
+  smoke-test:
+    name: Smoke test (verify-deploy.sh)
+    needs: [deploy-backend, deploy-frontend]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq jq
+
+      - name: Restore deployed env
+        run: |
+          mkdir -p app
+          cat > app/.env.deployed <<'EOF'
+          ${{ needs.deploy-backend.outputs.env_deployed }}
+          EOF
+
+      - name: Run verify-deploy.sh
+        env:
+          VERIFY_AUTH_TOKEN: ${{ secrets.VERIFY_AUTH_TOKEN }}
+        run: |
+          chmod +x app/scripts/*.sh
+          bash app/scripts/verify-deploy.sh
+
+  # --------------------------------------------------------------------------
+  # 5. PR / commit comment with deploy summary
+  # --------------------------------------------------------------------------
+  summarize:
+    name: Post deploy summary
+    needs: [deploy-backend, deploy-frontend, smoke-test]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Build summary body
+        id: body
+        run: |
+          status_backend="${{ needs.deploy-backend.result }}"
+          status_frontend="${{ needs.deploy-frontend.result }}"
+          status_smoke="${{ needs.smoke-test.result }}"
+          emoji() { case "$1" in success) echo "PASS";; failure) echo "FAIL";; skipped) echo "SKIP";; *) echo "$1";; esac; }
+          {
+            echo "body<<MARKDOWN"
+            echo "## Yaksha deploy — $(date -u +%FT%TZ)"
+            echo ""
+            echo "Commit: \`${GITHUB_SHA::8}\` on \`${GITHUB_REF_NAME}\`"
+            echo ""
+            echo "| Stage | Status |"
+            echo "|---|---|"
+            echo "| Backend deploy | $(emoji $status_backend) |"
+            echo "| Frontend deploy | $(emoji $status_frontend) |"
+            echo "| Smoke tests | $(emoji $status_smoke) |"
+            echo ""
+            echo "### Deployed URLs"
+            echo '```'
+            echo "${{ needs.deploy-backend.outputs.env_deployed }}"
+            echo '```'
+            echo ""
+            echo "Run: [#${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            echo "MARKDOWN"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment on PR (if push came from a PR merge)
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = `${{ steps.body.outputs.body }}`;
+            // Find the most recent PR associated with this commit
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+            });
+            if (prs.length === 0) {
+              core.info('No PR associated with this commit — posting to commit instead');
+              await github.rest.repos.createCommitComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: context.sha,
+                body,
+              });
+              return;
+            }
+            for (const pr of prs) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body,
+              });
+              core.info(`Posted deploy summary to PR #${pr.number}`);
+            }
+
+      - name: Write summary to GitHub Actions UI
+        run: |
+          {
+            echo "## Yaksha deploy — $(date -u +%FT%TZ)"
+            echo ""
+            echo "${{ steps.body.outputs.body }}"
+          } >> "$GITHUB_STEP_SUMMARY"
