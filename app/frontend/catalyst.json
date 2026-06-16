@@ -1,11 +1,18 @@
 {
+  "project_id": "47060000000020001",
+  "org_id": "60074155874",
+  "project_name": "Yakshna",
+  "region": "IN",
+  "environment": "Development",
+  "console_url": "https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020001/Development#/slate",
   "client": {
-    "name": "ksp-saathi-frontend",
+    "name": "yakshna-frontend",
     "source": "out",
     "index_page": "index.html",
     "error_page": "404.html",
     "stack": "node18",
     "build_command": "npm run build",
     "deploy_path": "out"
-  }
+  },
+  "notes": "Static export from Next.js. Build with `npm run build` then deploy with `catalyst deploy --only web-client-hosting`."
 }

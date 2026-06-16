@@ -1,9 +1,12 @@
 {
-  "project_id": "60074155874XXXXXXXX",
-  "project_name": "ksp-saathi-backend",
+  "project_id": "47060000000020001",
+  "org_id": "60074155874",
+  "project_name": "Yakshna",
+  "internal_codename": "ksp-saathi-backend",
   "region": "IN",
   "data_center": "console.catalyst.zoho.in",
   "environment": "Development",
+  "console_url": "https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020001/Development",
   "features": {
     "functions": {
       "enabled": true,
@@ -27,19 +30,24 @@
     "authentication": {
       "enabled": true
     },
-    "circuits": {
-      "enabled": true,
-      "directory": "circuits"
-    },
     "smartbrowz": {
       "enabled": true
     },
     "zia": {
+      "enabled": true
+    },
+    "quickml": {
+      "enabled": true
+    },
+    "api-gateway": {
+      "enabled": true
+    },
+    "pipelines": {
       "enabled": true
     }
   },
   "stacks": {
     "python": "3.11"
   },
-  "notes": "Replace project_id with the real Catalyst project id from console.catalyst.zoho.in once provisioned."
+  "notes": "Circuits NOT in India DC — orchestration done via the Python `orchestrator` function instead. See functions/orchestrator/README.md."
 }

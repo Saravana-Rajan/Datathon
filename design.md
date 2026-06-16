@@ -1,6 +1,7 @@
 # Datathon 2026 — Challenge 01 Design Document
 
-**Product name:** **Yaksha** (ಯಕ್ಷ) — *"the guardian spirit for Karnataka Police data"*
+**Product name:** **Yakshna** (ಯಕ್ಷ) — *"the guardian spirit for Karnataka Police data"*
+**Catalyst project:** `Yakshna` · PID `47060000000020001` · India DC
 **Internal codename:** `ksp-saathi` (used in code paths, folder names, function IDs)
 **Challenge:** Intelligent Conversational AI for KSP Crime Database
 **Team:** 5 members (mixed AI / data / frontend / design / voice)

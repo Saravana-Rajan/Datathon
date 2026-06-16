@@ -1,0 +1,129 @@
+{
+  "meta": {
+    "project": "Yaksha (ksp-saathi)",
+    "doc_ref": "docs/demo-script.md Section B.3",
+    "purpose": "Pre-tested golden-path queries the live stage demo runs in order. Every query has a cached deterministic response in Catalyst Cache for the Ctrl+Shift+D fallback.",
+    "demo_order": ["q1_mg_road_thefts", "q2_ravi_kumar_network", "q3_why_audit", "q4_predict_chain_snatch", "q5_role_switch"],
+    "hard_latency_budget_ms": 5000,
+    "soft_latency_budget_ms": 3500
+  },
+  "queries": [
+    {
+      "id": "q1_mg_road_thefts",
+      "demo_beat": "B.3 Query 1 (2:00-2:45)",
+      "persona": "PSI on field, English voice",
+      "role": "sub_inspector",
+      "query_en": "Show me vehicle thefts near MG Road last month",
+      "query_kn": "ಎಂ.ಜಿ. ರಸ್ತೆಯ ಬಳಿ ಕಳೆದ ತಿಂಗಳಲ್ಲಿ ವಾಹನ ಕಳ್ಳತನಗಳನ್ನು ತೋರಿಸಿ",
+      "expected_intent": "geo_query",
+      "expected_secondary_intent": "tabular_query",
+      "expected_viz": "map",
+      "expected_count_range": [8, 16],
+      "expected_focus": {
+        "center_lat": 12.9756,
+        "center_lng": 77.6068,
+        "radius_m": 800,
+        "h3_resolution": 9
+      },
+      "expected_filters": {
+        "crime_type": ["motor_vehicle_theft", "vehicle_theft"],
+        "date_range_days": 30,
+        "location": "MG Road"
+      },
+      "expected_answer_fragment_en": "vehicle thefts within 800 metres of MG Road",
+      "expected_answer_fragment_kn": "ವಾಹನ ಕಳ್ಳತನ"
+    },
+    {
+      "id": "q2_ravi_kumar_network",
+      "demo_beat": "B.3 Query 2 (2:45-3:30)",
+      "persona": "DySP at CCB, Kannada voice",
+      "role": "dcp",
+      "query_en": "Show the criminal network of suspect Ravi Kumar",
+      "query_kn": "ರವಿ ಕುಮಾರ್ ಸಂಶಯಿತನ ಕ್ರಿಮಿನಲ್ ಜಾಲವನ್ನು ತೋರಿಸಿ",
+      "expected_intent": "graph_query",
+      "expected_viz": "network_graph",
+      "expected_count_range": [10, 14],
+      "expected_focus": {
+        "seed_person_id": "P_RAVI_KUMAR_DEMO",
+        "hops": 3,
+        "highlight_gang_hubs": true
+      },
+      "expected_filters": {
+        "edge_types": ["CO_ACCUSED_IN", "LIVES_NEAR", "CALLS"],
+        "max_nodes": 15
+      },
+      "expected_answer_fragment_en": "12 connected persons",
+      "expected_answer_fragment_kn": "12 ಸಂಪರ್ಕಿತ ವ್ಯಕ್ತಿಗಳಿದ್ದಾರೆ"
+    },
+    {
+      "id": "q3_why_audit",
+      "demo_beat": "B.3 Query 3 (3:30-4:15)",
+      "persona": "DySP follow-up — explainability proof",
+      "role": "dcp",
+      "query_en": "Why did you say that?",
+      "query_kn": "ಯಾಕೆ ಹಾಗೆ ಹೇಳಿದಿರಿ?",
+      "expected_intent": "meta_query",
+      "expected_viz": "audit_drawer",
+      "expected_count_range": [5, 5],
+      "expected_focus": {
+        "lookup": "previous_turn_audit_chain"
+      },
+      "expected_filters": {
+        "audit_fields": ["intent", "cypher", "sources", "model", "latency_ms"]
+      },
+      "expected_answer_fragment_en": "Qwen 2.5",
+      "expected_answer_fragment_kn": "ಮೂಲಗಳು"
+    },
+    {
+      "id": "q4_predict_chain_snatch",
+      "demo_beat": "B.3 Query 4 (4:15-5:00)",
+      "persona": "PI Bengaluru South — predictive resource hints",
+      "role": "inspector",
+      "query_en": "Predict next week's chain-snatching hotspots in Bengaluru South",
+      "query_kn": "ಮುಂದಿನ ವಾರ ಬೆಂಗಳೂರು ದಕ್ಷಿಣದಲ್ಲಿ ಚೈನ್ ಸ್ನ್ಯಾಚಿಂಗ್ ಹಾಟ್‌ಸ್ಪಾಟ್‌ಗಳನ್ನು ಊಹಿಸಿ",
+      "expected_intent": "predictive_query",
+      "expected_viz": "forecast_heatmap",
+      "expected_count_range": [3, 7],
+      "expected_focus": {
+        "region": "Bengaluru South",
+        "horizon_days": 7,
+        "crime_type": "chain_snatching"
+      },
+      "expected_filters": {
+        "model": "zia_automl_forecast_v1",
+        "features_included": ["recent_incident_count_7d", "day_of_week", "time_of_day", "distance_to_metro_station", "holiday_proximity"],
+        "features_excluded": ["caste", "religion", "community"],
+        "must_show_confidence_interval": true
+      },
+      "expected_answer_fragment_en": "confidence interval",
+      "expected_answer_fragment_kn": "ವಿಶ್ವಾಸ"
+    },
+    {
+      "id": "q5_role_switch",
+      "demo_beat": "B.3 Query 5 (5:00-5:45)",
+      "persona": "PI -> SHO role switch — same query, broader access",
+      "role": "sho",
+      "query_en": "Show me vehicle thefts near MG Road last month",
+      "query_kn": "ಎಂ.ಜಿ. ರಸ್ತೆಯ ಬಳಿ ಕಳೆದ ತಿಂಗಳಲ್ಲಿ ವಾಹನ ಕಳ್ಳತನಗಳನ್ನು ತೋರಿಸಿ",
+      "expected_intent": "geo_query",
+      "expected_secondary_intent": "tabular_query",
+      "expected_viz": "map",
+      "expected_count_range": [18, 26],
+      "expected_focus": {
+        "center_lat": 12.9756,
+        "center_lng": 77.6068,
+        "radius_m": 800,
+        "h3_resolution": 9,
+        "cross_jurisdiction": true
+      },
+      "expected_filters": {
+        "crime_type": ["motor_vehicle_theft", "vehicle_theft"],
+        "date_range_days": 30,
+        "location": "MG Road",
+        "include_cross_station": true
+      },
+      "expected_answer_fragment_en": "additional cross-jurisdiction",
+      "expected_answer_fragment_kn": "ವಾಹನ ಕಳ್ಳತನ"
+    }
+  ]
+}

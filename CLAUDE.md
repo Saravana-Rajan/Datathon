@@ -1,6 +1,7 @@
-# Yaksha (ಯಕ್ಷ) — Datathon 2026 Project Context
+# Yakshna (ಯಕ್ಷ) — Datathon 2026 Project Context
 
-> **Product name:** **Yaksha** — Sanskrit/Kannada for "guardian spirit". A protective AI watching over Karnataka's police data.
+> **Product name:** **Yakshna** (variant of Yaksha — Sanskrit/Kannada for "guardian spirit"). A protective AI watching over Karnataka's police data.
+> **Catalyst project name:** `Yakshna` (PID `47060000000020001`)
 > **Internal codename:** `ksp-saathi` (kept for code identifiers/folder names — don't rename the code paths)
 
 > This file is auto-loaded into every Claude Code session. Read it before doing anything.
@@ -18,7 +19,10 @@ All product decisions are locked in [`design.md`](./design.md) — **don't re-li
 ## User profile (Saravana Rajan)
 
 - Email: `saravanarajan.b@techjays.com`
-- Catalyst account: User ID `60067540097`, India console (`console.catalyst.zoho.in`)
+- Catalyst account: User ID `60067540097`, Org `60074155874`, India console (`console.catalyst.zoho.in`)
+- **Catalyst project: `Yakshna`** — PID `47060000000020001`
+- **Console URL:** https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020001/Development
+- Catalyst credits: **claimed** ✅ (promo code `KSPH26`)
 - Role on this project: monitors progress; delegates implementation to Claude
 - Communication style: short, decisive, prefers ALL CAPS for emphasis when frustrated
 - Wants speed, parallel agents, minimal back-and-forth confirmation
