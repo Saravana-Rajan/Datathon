@@ -1,4 +1,4 @@
-"""Kannada + English bilingual coverage tests for Yaksha.
+"""Kannada + English bilingual coverage tests for Sarvik.
 
 Runs the 30-query golden set through a synthesizer harness and asserts:
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ----------------------------------------------------------------------------
-# verify-deploy.sh — Post-deploy smoke tests for Yaksha (ksp-saathi)
+# verify-deploy.sh — Post-deploy smoke tests for Sarvik (ksp-saathi)
 #
 # Reads deployed URLs from app/.env.deployed (written by deploy-backend.sh),
 # hits each endpoint with a sanity-check payload, and asserts:
@@ -37,7 +37,7 @@ AUTH_TOKEN="${VERIFY_AUTH_TOKEN:-}"
 
 usage() {
   cat <<EOF
-${C_BOLD}verify-deploy.sh${C_RESET} — Smoke-test deployed Yaksha endpoints
+${C_BOLD}verify-deploy.sh${C_RESET} — Smoke-test deployed Sarvik endpoints
 
 Usage:
   $(basename "$0") [--dry-run] [--timeout SECS]

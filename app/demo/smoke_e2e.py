@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Yaksha (ksp-saathi) — End-to-End Smoke Test
+Sarvik (ksp-saathi) — End-to-End Smoke Test
 ============================================
 
 Hits the deployed Catalyst orchestrator function with each of the 5 golden
@@ -118,7 +118,7 @@ def call_orchestrator(env: dict[str, str], *, query: str, language: str,
         "Content-Type": "application/json",
     }
     if env["user_token"]:
-        headers["X-Yaksha-User-Token"] = env["user_token"]
+        headers["X-Sarvik-User-Token"] = env["user_token"]
     payload = {
         "query": query,
         "language": language,
@@ -240,7 +240,7 @@ def check_query(spec: dict[str, Any], status_code: int, raw: dict[str, Any],
 # ---------------------------------------------------------------------------
 
 def print_results_table(results: list[QueryResult]) -> None:
-    table = Table(title="Yaksha E2E Smoke — Golden Queries")
+    table = Table(title="Sarvik E2E Smoke — Golden Queries")
     table.add_column("Query", style="cyan")
     table.add_column("Lang")
     table.add_column("HTTP", justify="right")
@@ -341,7 +341,7 @@ def main() -> int:
 
     languages = ["en", "kn"] if args.lang == "both" else [args.lang]
 
-    console.rule(f"[bold cyan]Yaksha smoke E2E — "
+    console.rule(f"[bold cyan]Sarvik smoke E2E — "
                  f"{len(queries)} queries × {len(languages)} lang(s)[/bold cyan]")
     console.print(f"Orchestrator: {env['api_base']}/.../function/{env['fn_name']}/execute")
     console.print(f"Hard budget: {HARD_BUDGET_MS}ms  Soft budget: {SOFT_BUDGET_MS}ms\n")

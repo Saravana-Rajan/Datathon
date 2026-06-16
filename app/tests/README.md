@@ -1,6 +1,6 @@
-# Yaksha (ksp-saathi) — Integration Test Suite
+# Sarvik (ksp-saathi) — Integration Test Suite
 
-End-to-end tests for the Yaksha conversational AI: orchestrator flow,
+End-to-end tests for the Sarvik conversational AI: orchestrator flow,
 voice loop, data integrity, RBAC, and bilingual Kannada/English coverage.
 
 Per-function unit tests still live next to each Catalyst Function (see
@@ -26,7 +26,7 @@ pytest app/tests -m bilingual
 pytest app/tests -m data_quality
 
 # live integration suite — requires a deployed orchestrator
-export CATALYST_API_BASE=https://yaksha-XXXXXX.catalystserverless.in
+export CATALYST_API_BASE=https://sarvik-XXXXXX.catalystserverless.in
 export CATALYST_AUTH_TOKEN=<bearer>     # optional
 pytest app/tests -m integration
 

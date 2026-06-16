@@ -1,11 +1,11 @@
-# Yaksha — Demo Runbook
+# Sarvik — Demo Runbook
 
-> **Project:** Yaksha (codename `ksp-saathi`) — Datathon 2026 Challenge 01
+> **Project:** Sarvik (codename `ksp-saathi`) — Datathon 2026 Challenge 01
 > **Demo script reference:** [`docs/demo-script.md`](../../docs/demo-script.md)
 > **Owner during demo week:** Person E (voice + demo). Person B sits at the laptop.
 
 This folder contains the **only** scripts that should be run in the 24 hours
-before a live Yaksha demo. Run them in the order below. Skip none.
+before a live Sarvik demo. Run them in the order below. Skip none.
 
 ```
 app/demo/
@@ -46,22 +46,22 @@ python seed_demo_data.py --reset
 
 What this does:
 
-1. **Wipes** any previous demo rows tagged `yaksha_demo_v1` from the FIRs,
+1. **Wipes** any previous demo rows tagged `sarvik_demo_v1` from the FIRs,
    Persons, and PersonLinks tables.
 2. **Filters** `data/firs.jsonl` (50K records) → **1,000** records
    focused on MG Road / Indiranagar / Whitefield / Halasuru / Ulsoor.
    Inserts them into the Catalyst Data Store `FIRs` table.
 3. **Creates** 3 demo officer accounts in Catalyst Auth with role
    custom claims:
-   - `inspector.suresh@yaksha-demo.in` — Inspector role, MG Road station
-   - `sho.lakshmi@yaksha-demo.in` — SHO role, Indiranagar station
-   - `dcp.mehta@yaksha-demo.in` — DCP role, Bengaluru East
+   - `inspector.suresh@sarvik-demo.in` — Inspector role, MG Road station
+   - `sho.lakshmi@sarvik-demo.in` — SHO role, Indiranagar station
+   - `dcp.mehta@sarvik-demo.in` — DCP role, Bengaluru East
 4. **Seeds** the Ravi Kumar criminal-network mini-dataset:
    - 5 persons (Ravi Kumar + 4 connections)
    - 6 relationship edges (`CO_ACCUSED_IN`, `LIVES_NEAR`, `CALLS`, `KNOWS`)
    - 4 linked FIRs across MG Road / Indiranagar / Whitefield
 5. **Pre-caches** the 5 golden Q&A pairs in Catalyst Cache segment
-   `yaksha_demo_golden` with a 7-day TTL. This is the `Ctrl+Shift+D`
+   `sarvik_demo_golden` with a 7-day TTL. This is the `Ctrl+Shift+D`
    fallback referenced in `demo-script.md` Section C.2.
 
 Idempotent flags:

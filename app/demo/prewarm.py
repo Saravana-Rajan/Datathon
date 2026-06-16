@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Yaksha (ksp-saathi) — Prewarm
+Sarvik (ksp-saathi) — Prewarm
 ==============================
 
 Keeps Catalyst Functions warm during the 10 minutes leading up to a live demo.
@@ -121,7 +121,7 @@ def main() -> int:
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)
 
-    console.rule(f"[bold cyan]Yaksha prewarm — "
+    console.rule(f"[bold cyan]Sarvik prewarm — "
                  f"{len(functions)} fns × {args.cycles} cycles "
                  f"× {args.interval}s[/bold cyan]")
     console.print("Functions: " + ", ".join(functions))

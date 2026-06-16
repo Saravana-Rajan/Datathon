@@ -1,8 +1,9 @@
-# Yakshna (ಯಕ್ಷ) — Datathon 2026 Project Context
+# Sarvik (ಸರ್ವಿಕ್) — Datathon 2026 Project Context
 
-> **Product name:** **Yakshna** (variant of Yaksha — Sanskrit/Kannada for "guardian spirit"). A protective AI watching over Karnataka's police data.
-> **Catalyst project name:** `Yakshna` (PID `47060000000020001`)
-> **Internal codename:** `ksp-saathi` (kept for code identifiers/folder names — don't rename the code paths)
+> **Product name:** **Sarvik** — from Sanskrit *sarvika* meaning "comprehensive / all-encompassing". The investigator's universal companion across all crime data.
+> **Catalyst project name:** `Sarvik` (PID `47060000000020024` — India DC) ✅ active
+> **Previous names (do not use):** Yakshna · Yaksha · KSP Saathi
+> **Internal codename:** `ksp-saathi` (kept for code identifiers / folder names / function IDs — do NOT rename code paths, it breaks everything)
 
 > This file is auto-loaded into every Claude Code session. Read it before doing anything.
 
@@ -10,7 +11,7 @@
 
 ## What this project is
 
-**Yaksha** (codename `ksp-saathi`) = conversational AI for Karnataka State Police investigators. **Datathon 2026 Challenge 01** entry. Win goal: ₹2.5L (1st place). Finale demo day: 26 Sep 2026 in-person.
+**Sarvik** (codename `ksp-saathi`) = conversational AI for Karnataka State Police investigators. **Datathon 2026 Challenge 01** entry. Win goal: ₹2.5L (1st place). Finale demo day: 26 Sep 2026 in-person.
 
 All product decisions are locked in [`design.md`](./design.md) — **don't re-litigate them**, only update via Section 18 Decision Log.
 
@@ -20,8 +21,9 @@ All product decisions are locked in [`design.md`](./design.md) — **don't re-li
 
 - Email: `saravanarajan.b@techjays.com`
 - Catalyst account: User ID `60067540097`, Org `60074155874`, India console (`console.catalyst.zoho.in`)
-- **Catalyst project: `Yakshna`** — PID `47060000000020001`
-- **Console URL:** https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020001/Development
+- **Catalyst project: `Sarvik`** — PID `47060000000020024` (active, India DC)
+- **Console URL:** https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020024/Development
+- **Previous project (deprecated):** `47060000000020001` (was `Yakshna`)
 - Catalyst credits: **claimed** ✅ (promo code `KSPH26`)
 - Role on this project: monitors progress; delegates implementation to Claude
 - Communication style: short, decisive, prefers ALL CAPS for emphasis when frustrated

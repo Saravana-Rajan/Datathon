@@ -1,4 +1,4 @@
-"""End-to-end voice loop tests for Yaksha.
+"""End-to-end voice loop tests for Sarvik.
 
 These tests upload sample audio to the voice ingress endpoint and assert
 that:

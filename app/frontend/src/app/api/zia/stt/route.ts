@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": responseContentType,
         // Surface the request id so it can be cross-referenced in the
         // Catalyst audit log.
-        "X-Yaksha-Trace-Id":
+        "X-Sarvik-Trace-Id":
           upstream.headers.get("x-trace-id") ??
           crypto.randomUUID(),
       },

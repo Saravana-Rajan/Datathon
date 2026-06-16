@@ -1,5 +1,5 @@
 {
-  "description": "30 representative Yaksha investigator queries with expected routing + output shape. Used by test_bilingual.py, test_e2e_query_flow.py, and any future eval harness. Mix is intentional: 15 English, 15 Kannada; ~equal split across the 6 routing intents (tabular_query, geo_query, graph_query, predictive_query, lookup, meta_query).",
+  "description": "30 representative Sarvik investigator queries with expected routing + output shape. Used by test_bilingual.py, test_e2e_query_flow.py, and any future eval harness. Mix is intentional: 15 English, 15 Kannada; ~equal split across the 6 routing intents (tabular_query, geo_query, graph_query, predictive_query, lookup, meta_query).",
   "intent_taxonomy": [
     "tabular_query",
     "geo_query",

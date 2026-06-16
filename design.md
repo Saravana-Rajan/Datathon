@@ -1,7 +1,8 @@
 # Datathon 2026 — Challenge 01 Design Document
 
-**Product name:** **Yakshna** (ಯಕ್ಷ) — *"the guardian spirit for Karnataka Police data"*
-**Catalyst project:** `Yakshna` · PID `47060000000020001` · India DC
+**Product name:** **Sarvik** (ಸರ್ವಿಕ್) — *"the investigator's universal companion — every case, every connection, every insight"*
+**Catalyst project:** `Sarvik` · PID `47060000000020024` · India DC ✅
+**Naming history:** KSP Saathi → Yaksha → Yakshna → **Sarvik** (current)
 **Internal codename:** `ksp-saathi` (used in code paths, folder names, function IDs)
 **Challenge:** Intelligent Conversational AI for KSP Crime Database
 **Team:** 5 members (mixed AI / data / frontend / design / voice)
@@ -543,6 +544,8 @@ We will not build (saved for v2):
 | 2026-06-14 | **App-level H3 indexing** for hotspots (no PostGIS) | Catalyst Data Store has no spatial support. H3 + Google Maps. | Low |
 | 2026-06-14 | Investigating ranks targeted = PSI, PI, DySP | Confirmed by Karnataka HC 2022 + research brief | Low |
 | 2026-06-16 | **Product renamed: KSP Saathi → Yaksha** (codename `ksp-saathi` retained for code paths) | "Yaksha" = Sanskrit/Kannada guardian spirit — culturally resonant for police AI; better demo brand | None |
+| 2026-06-16 | **Product renamed: Yaksha → Yakshna** | User chose variant spelling, matched their Catalyst project name | None |
+| 2026-06-16 | **Product renamed: Yakshna → Sarvik** | User chose final name. "Sarvik" = Sanskrit "sarvika" (comprehensive/universal). Fits investigator-companion positioning. NEW Catalyst project being created by user; old PID `47060000000020024` deprecated. | Low — `catalyst.json` files need PID update once user shares new project ID |
 | 2026-06-16 | **Kannada CONFIRMED on Gemini Live API** (per docs harvest) | BCP-47 `kn-IN` supported on `gemini-3.1-flash-live-preview`. Also `gemini-3.5-live-translate-preview` for witness-statement translation. Removes our biggest open risk. | None |
 | 2026-06-16 | **⚠ Catalyst Circuits is NOT available in India DC** (per docs harvest) | Orchestration moves from YAML Circuits → Python "orchestrator" Function that chains specialist functions sequentially/parallel via httpx | Medium — `circuits/main-query-flow.yaml` replaced by `functions/orchestrator/index.py` |
 | 2026-06-16 | **Catalyst Zia has NO native STT/TTS** (per docs harvest) | Voice path always external (Gemini Live primary, Google STT/TTS fallback). Strengthens our justified-gap argument. | None |

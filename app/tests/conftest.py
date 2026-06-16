@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for the Yaksha (ksp-saathi) integration suite.
+"""Shared pytest fixtures for the Sarvik (ksp-saathi) integration suite.
 
 These fixtures cover three layers:
 

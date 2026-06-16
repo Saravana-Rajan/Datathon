@@ -1,12 +1,12 @@
 {
-  "project_id": "47060000000020001",
+  "project_id": "47060000000020024",
   "org_id": "60074155874",
-  "project_name": "Yakshna",
+  "project_name": "Sarvik",
   "internal_codename": "ksp-saathi-backend",
   "region": "IN",
   "data_center": "console.catalyst.zoho.in",
   "environment": "Development",
-  "console_url": "https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020001/Development",
+  "console_url": "https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020024/Development",
   "features": {
     "functions": {
       "enabled": true,

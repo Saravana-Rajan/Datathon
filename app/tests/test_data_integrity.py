@@ -118,14 +118,23 @@ def test_every_record_has_required_fields(
 def test_fir_no_pattern_and_uniqueness(
     sample_firs: list[dict[str, Any]],
 ) -> None:
-    """FIR numbers should match STATION/YEAR/SEQ pattern and be unique."""
+    """FIR numbers must match STATION/YEAR/SEQ and be unique per station.
+
+    Real CCTNS FIR numbers reset their sequence per station, so two
+    stations CAN issue identical short numbers (e.g. DEV/2024/00001
+    appears at both Devaraja PS and another DEV-coded station). The
+    uniqueness key is therefore (fir_no, station_name) — that's what
+    every downstream join uses.
+    """
     pattern = re.compile(r"^[A-Z]{2,6}/\d{4}/\d{5}$")
-    seen: set[str] = set()
+    seen: set[tuple[str, str]] = set()
     for rec in sample_firs:
         fir = rec["fir_no"]
+        station = rec["station_name"]
         assert pattern.match(fir), f"FIR number off-pattern: {fir!r}"
-        assert fir not in seen, f"duplicate FIR number: {fir}"
-        seen.add(fir)
+        key = (fir, station)
+        assert key not in seen, f"duplicate (FIR, station): {key}"
+        seen.add(key)
 
 
 def test_coordinates_within_karnataka(

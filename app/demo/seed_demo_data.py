@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Yaksha (ksp-saathi) — Demo Seed Script
+Sarvik (ksp-saathi) — Demo Seed Script
 ======================================
 
 Prepares a bulletproof demo environment in Catalyst:
@@ -49,7 +49,7 @@ REPO_ROOT = HERE.parent.parent
 DATA_FILE = REPO_ROOT / "data" / "firs.jsonl"
 GOLDEN_QUERIES = HERE / "golden_queries.json"
 
-DEMO_TAG = "yaksha_demo_v1"  # written into every demo row for easy wipe
+DEMO_TAG = "sarvik_demo_v1"  # written into every demo row for easy wipe
 
 # Bengaluru target neighbourhoods. We filter on station_name + location_text
 # substrings so we pick up FIRs that are *near* the demo loci, not only the
@@ -80,7 +80,7 @@ TABLE_PERSONS = "Persons"  # for the linked criminal network
 TABLE_RELATIONSHIPS = "PersonLinks"
 
 # Catalyst Cache segment name + TTL
-DEMO_CACHE_SEGMENT = "yaksha_demo_golden"
+DEMO_CACHE_SEGMENT = "sarvik_demo_golden"
 DEMO_CACHE_TTL_HOURS = 24 * 7  # 1 week, refreshed each --reset
 
 # Demo officers — emails are synthetic but reachable through Catalyst auth
@@ -88,7 +88,7 @@ DEMO_OFFICERS = [
     {
         "first_name": "Suresh",
         "last_name": "Kumar",
-        "email": "inspector.suresh@yaksha-demo.in",
+        "email": "inspector.suresh@sarvik-demo.in",
         "role": "inspector",
         "claims": {
             "role": "inspector",
@@ -102,7 +102,7 @@ DEMO_OFFICERS = [
     {
         "first_name": "Lakshmi",
         "last_name": "Rao",
-        "email": "sho.lakshmi@yaksha-demo.in",
+        "email": "sho.lakshmi@sarvik-demo.in",
         "role": "sho",
         "claims": {
             "role": "sho",
@@ -116,7 +116,7 @@ DEMO_OFFICERS = [
     {
         "first_name": "Vikram",
         "last_name": "Mehta",
-        "email": "dcp.mehta@yaksha-demo.in",
+        "email": "dcp.mehta@sarvik-demo.in",
         "role": "dcp",
         "claims": {
             "role": "dcp",
@@ -702,7 +702,7 @@ def main() -> int:
     cfg = CatalystConfig.from_env()
     client = CatalystClient(cfg, dry_run=args.dry_run)
 
-    console.rule(f"[bold cyan]Yaksha demo seed — env={cfg.environment} "
+    console.rule(f"[bold cyan]Sarvik demo seed — env={cfg.environment} "
                  f"dry_run={args.dry_run}[/bold cyan]")
 
     if args.reset:

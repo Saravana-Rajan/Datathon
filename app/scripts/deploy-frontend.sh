@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ----------------------------------------------------------------------------
-# deploy-frontend.sh — Deploy Yaksha Next.js frontend to Catalyst Web Client.
+# deploy-frontend.sh — Deploy Sarvik Next.js frontend to Catalyst Web Client.
 #
 # Datathon 2026 — Karnataka Police conversational AI
-# Project ID : 47060000000020001 (India DC)
+# Project ID : 47060000000020024 (India DC)
 # Workflow   : npm install -> npm run build -> catalyst deploy --only web-client-hosting
 # ----------------------------------------------------------------------------
 set -Eeuo pipefail
@@ -30,14 +30,14 @@ warn() { say "${C_YLW}[deploy-frontend] WARN${C_RESET} $*"; }
 err()  { say "${C_RED}[deploy-frontend] FAIL${C_RESET} $*" >&2; }
 step() { say ""; say "${C_BOLD}${C_BLU}=== $* ===${C_RESET}"; }
 
-EXPECTED_PROJECT_ID="${EXPECTED_PROJECT_ID:-47060000000020001}"
+EXPECTED_PROJECT_ID="${EXPECTED_PROJECT_ID:-47060000000020024}"
 DRY_RUN=0
 SKIP_BUILD=0
 CATALYST_CLI="${CATALYST_CLI:-catalyst}"
 
 usage() {
   cat <<EOF
-${C_BOLD}deploy-frontend.sh${C_RESET} — Deploy Yaksha frontend to Catalyst Web Client Hosting
+${C_BOLD}deploy-frontend.sh${C_RESET} — Deploy Sarvik frontend to Catalyst Web Client Hosting
 
 Usage:
   $(basename "$0") [--dry-run] [--skip-build]

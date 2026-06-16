@@ -1,6 +1,6 @@
-# Yaksha — Deploy Scripts
+# Sarvik — Deploy Scripts
 
-Real, runnable Bash for getting Yaksha (codename `ksp-saathi`) onto Zoho Catalyst (India DC, project `47060000000020001`).
+Real, runnable Bash for getting Sarvik (codename `ksp-saathi`) onto Zoho Catalyst (India DC, project `47060000000020024`).
 
 Designed to be re-run safely: idempotent where possible, fails loudly when not, and writes a timestamped log per run under `app/.deploy-logs/`.
 
@@ -31,7 +31,7 @@ Designed to be re-run safely: idempotent where possible, fails loudly when not, 
 2. Work through every checkbox in `setup-catalyst-services.md`. This creates the Data Store tables, NoSQL tables, Stratus buckets, Auth providers, QuickML model endpoints, API Gateway routes, and environment variables in the Catalyst console.
 3. (Optional) Create `app/scripts/.env.deploy` with any per-machine overrides. Example:
    ```bash
-   EXPECTED_PROJECT_ID=47060000000020001
+   EXPECTED_PROJECT_ID=47060000000020024
    EXPECTED_ORG_ID=60074155874
    EXPECTED_REGION=in
    CATALYST_CLI=catalyst
@@ -118,7 +118,7 @@ Common failure shapes and what to do:
 |---|---|---|
 | `catalyst CLI not found` | CLI not installed | `npm install -g zcatalyst-cli` |
 | `catalyst account session active` step fails | Not logged in / token expired | `catalyst login` (India DC) |
-| `Project ID mismatch` | `app/backend/catalyst.json` points at wrong project | `cd app/backend && catalyst init` and pick `yaksha` / `47060000000020001` |
+| `Project ID mismatch` | `app/backend/catalyst.json` points at wrong project | `cd app/backend && catalyst init` and pick `sarvik` / `47060000000020024` |
 | `pytest failed for <function>` | Real test failure | Fix the test (don't `--skip-tests` it) |
 | `Could not parse deployed URL` | Catalyst CLI changed its output format | Script falls back to a deterministic URL guess; smoke test will still validate |
 | `expected HTTP 200, got 403` in `verify-deploy.sh` | Env vars not set in Catalyst console | Open `setup-catalyst-services.md` §8 and confirm every key is set in the correct scope |
@@ -128,7 +128,7 @@ Common failure shapes and what to do:
 ## Conventions
 
 - **No emoji**, no Unicode noise — these scripts run in CI, on Git Bash, on macOS, and on Catalyst-hosted runners. Plain ASCII only.
-- **Absolute project ID**: every script verifies `47060000000020001` before it deploys. If you fork to a new project, override with `EXPECTED_PROJECT_ID` in `.env.deploy`.
+- **Absolute project ID**: every script verifies `47060000000020024` before it deploys. If you fork to a new project, override with `EXPECTED_PROJECT_ID` in `.env.deploy`.
 - **Single source of URLs**: `app/.env.deployed` is the only place deploy URLs live. The orchestrator function reads them from there at runtime; the smoke tester reads them in CI.
 - **No bypassing tests in CI**: the workflow only honors `skip_tests=true` via manual `workflow_dispatch`; pushes to `main` always run pytest.
 

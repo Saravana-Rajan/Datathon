@@ -2,7 +2,7 @@
 # ----------------------------------------------------------------------------
 # deploy-all.sh — Orchestrator: deploy backend, then frontend.
 #
-# Datathon 2026 — Yaksha (ksp-saathi)
+# Datathon 2026 — Sarvik (ksp-saathi)
 # Stops at the first failure with a clear "what to do next" message.
 # ----------------------------------------------------------------------------
 set -Eeuo pipefail
@@ -32,7 +32,7 @@ SKIP_VERIFY=0
 
 usage() {
   cat <<EOF
-${C_BOLD}deploy-all.sh${C_RESET} — full Yaksha deploy (backend then frontend)
+${C_BOLD}deploy-all.sh${C_RESET} — full Sarvik deploy (backend then frontend)
 
 Usage:
   $(basename "$0") [--dry-run] [--skip-tests] [--skip-verify]
@@ -83,7 +83,7 @@ cleanup() {
 trap cleanup EXIT
 trap 'err "Interrupted"; exit 130' INT TERM HUP
 
-step "Yaksha deploy-all start — $(date -u +%FT%TZ)"
+step "Sarvik deploy-all start — $(date -u +%FT%TZ)"
 info "Flags: dry-run=${DRY_RUN_FLAG:-no}  skip-tests=${SKIP_TESTS_FLAG:-no}  skip-verify=${SKIP_VERIFY}"
 
 # ---------- Stage 1: backend -----------------------------------------------
@@ -92,7 +92,7 @@ if ! bash "${SCRIPT_DIR}/deploy-backend.sh" ${DRY_RUN_FLAG} ${SKIP_TESTS_FLAG}; 
   abort "backend" \
     "Backend deploy failed. Inspect ${RUN_LOG} and the backend log under ${LOG_DIR}/. \
 Common causes: (a) catalyst CLI not logged in -> run 'catalyst login' against India DC; \
-(b) wrong project ID -> rerun 'catalyst init' inside app/backend pointing at PID 47060000000020001; \
+(b) wrong project ID -> rerun 'catalyst init' inside app/backend pointing at PID 47060000000020024; \
 (c) pytest failure -> fix the failing test before redeploying; \
 (d) Catalyst service quota -> check console.catalyst.zoho.in -> Settings -> Usage."
 fi
@@ -129,4 +129,4 @@ if [[ -f "${APP_DIR}/.env.deployed" ]]; then
   grep -E '^URL_' "${APP_DIR}/.env.deployed" | sed 's/^/  /'
 fi
 say ""
-ok "Yaksha is live."
+ok "Sarvik is live."

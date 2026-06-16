@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # ----------------------------------------------------------------------------
-# deploy-backend.sh — Deploy Yaksha (ksp-saathi) backend to Zoho Catalyst.
+# deploy-backend.sh — Deploy Sarvik (ksp-saathi) backend to Zoho Catalyst.
 #
 # Datathon 2026 — Karnataka Police conversational AI
-# Project ID  : 47060000000020001  (Catalyst PID, India DC)
+# Project ID  : 47060000000020024  (Catalyst PID, India DC)
 # Org ID      : 60074155874
-# Console     : https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020001/Development
+# Console     : https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020024/Development
 #
 # What it does
 #   1. Loads env from .env.deploy (source-controlled defaults, untracked overrides)
@@ -57,7 +57,7 @@ err()  { say "${C_RED}[deploy-backend] FAIL${C_RESET} $*" >&2; }
 step() { say ""; say "${C_BOLD}${C_BLU}=== $* ===${C_RESET}"; }
 
 # ---------- defaults / flags ------------------------------------------------
-EXPECTED_PROJECT_ID="${EXPECTED_PROJECT_ID:-47060000000020001}"
+EXPECTED_PROJECT_ID="${EXPECTED_PROJECT_ID:-47060000000020024}"
 EXPECTED_ORG_ID="${EXPECTED_ORG_ID:-60074155874}"
 EXPECTED_REGION="${EXPECTED_REGION:-in}"
 DRY_RUN=0
@@ -66,7 +66,7 @@ ONLY_FUNCTION=""
 
 usage() {
   cat <<EOF
-${C_BOLD}deploy-backend.sh${C_RESET} — Deploy Yaksha backend to Zoho Catalyst
+${C_BOLD}deploy-backend.sh${C_RESET} — Deploy Sarvik backend to Zoho Catalyst
 
 Usage:
   $(basename "$0") [--dry-run] [--skip-tests] [--only <function-name>]
@@ -173,7 +173,7 @@ preflight() {
     warn "Could not parse project id from catalyst.json — skipping strict check"
   elif [[ "${actual_pid}" != "${EXPECTED_PROJECT_ID}" ]]; then
     err "Project ID mismatch. Expected ${EXPECTED_PROJECT_ID}, got ${actual_pid}"
-    err "Re-run: cd app/backend && catalyst init  (pick project 'yaksha' / PID ${EXPECTED_PROJECT_ID})"
+    err "Re-run: cd app/backend && catalyst init  (pick project 'sarvik' / PID ${EXPECTED_PROJECT_ID})"
     exit 2
   else
     ok "Project ID matches: ${actual_pid}"
@@ -280,7 +280,7 @@ main() {
   # Reset .env.deployed (only on a non-dry-run full deploy)
   if [[ "${DRY_RUN}" == "0" && -z "${ONLY_FUNCTION}" ]]; then
     {
-      echo "# Yaksha — backend deploy URLs"
+      echo "# Sarvik — backend deploy URLs"
       echo "# Generated $(date -u +%FT%TZ) by deploy-backend.sh"
       echo "# Project: ${EXPECTED_PROJECT_ID}  Org: ${EXPECTED_ORG_ID}  Region: ${EXPECTED_REGION}"
     } > "${DEPLOYED_ENV}"

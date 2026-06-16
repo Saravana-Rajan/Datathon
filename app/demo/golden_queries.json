@@ -1,6 +1,6 @@
 {
   "meta": {
-    "project": "Yaksha (ksp-saathi)",
+    "project": "Sarvik (ksp-saathi)",
     "doc_ref": "docs/demo-script.md Section B.3",
     "purpose": "Pre-tested golden-path queries the live stage demo runs in order. Every query has a cached deterministic response in Catalyst Cache for the Ctrl+Shift+D fallback.",
     "demo_order": ["q1_mg_road_thefts", "q2_ravi_kumar_network", "q3_why_audit", "q4_predict_chain_snatch", "q5_role_switch"],

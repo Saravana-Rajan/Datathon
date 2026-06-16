@@ -63,7 +63,7 @@ const COPY: Record<
   }
 > = {
   en: {
-    title: "Yaksha",
+    title: "Sarvik",
     subtitle: "Karnataka Police Investigator AI",
     productName: "ಯಕ್ಷ — Karnataka Police Investigator AI",
     eyebrow: "Restricted system · Authorized officers only",

@@ -1,12 +1,12 @@
-# Yaksha — One-Time Catalyst Console Setup
+# Sarvik — One-Time Catalyst Console Setup
 
 This is the **manual** setup checklist for the Catalyst console pieces that **cannot** be expressed in `catalyst deploy`. Run through it once before the first `deploy-all.sh`. Expect ~30 minutes.
 
-- **Console URL**  https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020001/Development
-- **Project ID**   `47060000000020001`
+- **Console URL**  https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020024/Development
+- **Project ID**   `47060000000020024`
 - **Org ID**       `60074155874`
 - **Region / DC**  India (`zoho.in`)
-- **Project name** `yaksha` (codename `ksp-saathi`)
+- **Project name** `sarvik` (codename `ksp-saathi`)
 
 Track progress with the checkbox on each step. If you re-run this on a new account, the same steps work — just substitute your own IDs.
 
@@ -16,10 +16,10 @@ Track progress with the checkbox on each step. If you re-run this on a new accou
 
 - [ ] Open https://console.catalyst.zoho.in and sign in with `saravanarajan.b@techjays.com`.
 - [ ] Pick **Org `60074155874`** (top-left org switcher).
-- [ ] Open project **yaksha** (PID `47060000000020001`).
-- [ ] Confirm the URL bar shows `/project/47060000000020001/Development`. If it says `/Production`, switch to **Development** for initial setup.
+- [ ] Open project **sarvik** (PID `47060000000020024`).
+- [ ] Confirm the URL bar shows `/project/47060000000020024/Development`. If it says `/Production`, switch to **Development** for initial setup.
 
-[screenshot: org switcher + project list with yaksha selected]
+[screenshot: org switcher + project list with sarvik selected]
 [screenshot: dev/prod environment toggle (top-right)]
 
 ---
@@ -183,7 +183,7 @@ Path: **Develop → Authentication**
 - [ ] Enable **Google OAuth**
   - Client ID: from GCP console → APIs & Services → Credentials
   - Client Secret: same source
-  - Authorized redirect URI: `https://console.catalyst.zoho.in/baas/v1/project/47060000000020001/auth/callback/google`
+  - Authorized redirect URI: `https://console.catalyst.zoho.in/baas/v1/project/47060000000020024/auth/callback/google`
 - [ ] Disable all other providers (we explicitly only allow KSP officers)
 
 [screenshot: Authentication → Sign-in Methods with Email + Google enabled, others greyed]
@@ -212,7 +212,7 @@ Create 4 demo users by hand:
 - [ ] `demo-dsp@ksp.local` / role=`dsp` / district=`BNG-S`
 - [ ] `demo-admin@ksp.local` / role=`admin`
 
-Set strong throwaway passwords and store them in 1Password under "Yaksha Demo Users".
+Set strong throwaway passwords and store them in 1Password under "Sarvik Demo Users".
 
 [screenshot: User Management with 4 demo users]
 
@@ -222,25 +222,25 @@ Set strong throwaway passwords and store them in 1Password under "Yaksha Demo Us
 
 Path: **Develop → Stratus → + Create Bucket**
 
-### 4.1 Bucket: `yaksha-pdfs`
+### 4.1 Bucket: `sarvik-pdfs`
 
-- [ ] **Name**: `yaksha-pdfs`
+- [ ] **Name**: `sarvik-pdfs`
 - [ ] **Region**: India
 - [ ] **Visibility**: Private (signed URLs only)
 - [ ] **Lifecycle rule**: delete after `AUDIT_RETENTION_DAYS` (default 365)
 - [ ] **CORS**: allow `GET, HEAD` from `https://saathi.ksp-datathon.dev` and `https://*.catalystserverless.in`
 
-### 4.2 Bucket: `yaksha-audio` (voice turn recordings)
+### 4.2 Bucket: `sarvik-audio` (voice turn recordings)
 
-- [ ] **Name**: `yaksha-audio`
+- [ ] **Name**: `sarvik-audio`
 - [ ] **Region**: India
 - [ ] **Visibility**: Private
 - [ ] **Lifecycle**: delete after 30 days
 - [ ] **CORS**: same as above
 
-### 4.3 Bucket: `yaksha-uploads` (FIR PDF uploads from officers)
+### 4.3 Bucket: `sarvik-uploads` (FIR PDF uploads from officers)
 
-- [ ] **Name**: `yaksha-uploads`
+- [ ] **Name**: `sarvik-uploads`
 - [ ] **Region**: India
 - [ ] **Max file size**: 20 MB
 - [ ] **Allowed MIME**: `application/pdf`
@@ -271,7 +271,7 @@ Path: **AI → QuickML → LLM Serving**
 
 Path: **AI → QuickML → RAG Indexes → + New Index**
 
-- [ ] **Name**: `yaksha-firs-rag`
+- [ ] **Name**: `sarvik-firs-rag`
 - [ ] **Source**: Data Store table `firs` columns `narrative_en, narrative_kn`
 - [ ] **Embedding model**: leave default (we override via `GEMINI_EMBEDDING_MODEL` at the function layer when QuickML quality is insufficient — see CLAUDE.md LLM strategy)
 - [ ] **Chunk size**: 512 tokens, overlap 64
@@ -334,10 +334,10 @@ Add each key in **both** Development and Production scopes. Mark sensitive ones 
 
 ### 8.1 Catalyst-internal
 
-- [ ] `CATALYST_PROJECT_ID` = `47060000000020001`
+- [ ] `CATALYST_PROJECT_ID` = `47060000000020024`
 - [ ] `CATALYST_ORG_ID` = `60074155874`
 - [ ] `CATALYST_REGION` = `in`
-- [ ] `CATALYST_API_BASE` = `https://console.catalyst.zoho.in/baas/v1/project/47060000000020001`
+- [ ] `CATALYST_API_BASE` = `https://console.catalyst.zoho.in/baas/v1/project/47060000000020024`
 
 ### 8.2 Google Cloud (Gemini + Maps)
 
@@ -361,7 +361,7 @@ Add each key in **both** Development and Production scopes. Mark sensitive ones 
 - [ ] `QUICKML_QWEN_14B_URL`
 - [ ] `QUICKML_QWEN_7B_URL`
 - [ ] `QUICKML_API_KEY` *(secret)*
-- [ ] `QUICKML_RAG_INDEX` = `yaksha-firs-rag`
+- [ ] `QUICKML_RAG_INDEX` = `sarvik-firs-rag`
 
 ### 8.5 App config
 
@@ -378,9 +378,9 @@ Add each key in **both** Development and Production scopes. Mark sensitive ones 
 
 ### 8.6 Stratus bucket names
 
-- [ ] `STRATUS_BUCKET_PDFS` = `yaksha-pdfs`
-- [ ] `STRATUS_BUCKET_AUDIO` = `yaksha-audio`
-- [ ] `STRATUS_BUCKET_UPLOADS` = `yaksha-uploads`
+- [ ] `STRATUS_BUCKET_PDFS` = `sarvik-pdfs`
+- [ ] `STRATUS_BUCKET_AUDIO` = `sarvik-audio`
+- [ ] `STRATUS_BUCKET_UPLOADS` = `sarvik-uploads`
 
 ### 8.7 GCP service account JSON
 
@@ -397,7 +397,7 @@ Path: **Settings → Secret Files**
 
 ## 9. Final sanity check
 
-- [ ] `catalyst show` (locally) prints `Project ID: 47060000000020001` and `Region: in`
+- [ ] `catalyst show` (locally) prints `Project ID: 47060000000020024` and `Region: in`
 - [ ] Console → Functions → list shows all 9 function slots (after first `deploy-backend.sh` run)
 - [ ] Console → Authentication → Users → 4 demo users exist
 - [ ] Console → Data Store → 5 tables, all green

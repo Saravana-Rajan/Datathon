@@ -39,10 +39,10 @@ import { useKspStore, type Language } from "@/lib/store";
 // Storage keys — kept in one place so /demo and onboarding can reset them.
 // --------------------------------------------------------------------------
 const SETTINGS_KEYS = {
-  language: "yaksha-language-pref", // "kn" | "en" | "auto"
-  voiceEnabled: "yaksha-voice-enabled", // "1" | "0"
-  demoMode: "yaksha-demo-mode", // "1" | "0"
-  onboarded: "yaksha-onboarded", // "1" | "0"
+  language: "sarvik-language-pref", // "kn" | "en" | "auto"
+  voiceEnabled: "sarvik-voice-enabled", // "1" | "0"
+  demoMode: "sarvik-demo-mode", // "1" | "0"
+  onboarded: "sarvik-onboarded", // "1" | "0"
 } as const;
 
 type LanguagePref = "kn" | "en" | "auto";
@@ -254,7 +254,7 @@ function SettingsPageInner() {
           <div className="flex flex-col leading-tight">
             <span className="text-sm font-semibold">Settings</span>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Yaksha · ಯಕ್ಷ
+              Sarvik · ಯಕ್ಷ
             </span>
           </div>
         </div>
@@ -436,7 +436,7 @@ function SettingsPageInner() {
                   <DrawerHeader>
                     <DrawerTitle>Privacy &amp; data</DrawerTitle>
                     <DrawerDescription>
-                      How Yaksha handles your queries, voice, and audit trail.
+                      How Sarvik handles your queries, voice, and audit trail.
                     </DrawerDescription>
                   </DrawerHeader>
                   <div className="space-y-4 px-6 pb-6 text-sm leading-relaxed">
@@ -489,7 +489,7 @@ function SettingsPageInner() {
                       <p className="text-muted-foreground">
                         Officers can request a copy or deletion of their audit history.
                         Requests are routed to the SCRB Data Protection Officer and
-                        actioned within 30 days. Yaksha enforces purpose limitation: queries
+                        actioned within 30 days. Sarvik enforces purpose limitation: queries
                         are only used for investigative work, never for ad targeting or
                         external analytics.
                       </p>

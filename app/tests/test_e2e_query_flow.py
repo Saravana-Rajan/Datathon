@@ -1,4 +1,4 @@
-"""End-to-end happy-path query tests for the Yaksha orchestrator.
+"""End-to-end happy-path query tests for the Sarvik orchestrator.
 
 These tests POST a real query to the deployed Catalyst orchestrator
 function and consume the SSE stream it returns. They only run when

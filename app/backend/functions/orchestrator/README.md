@@ -1,4 +1,4 @@
-# orchestrator — Yaksha BRAIN (replaces Catalyst Circuits)
+# orchestrator — Sarvik BRAIN (replaces Catalyst Circuits)
 
 > Codename: `ksp-saathi` · Owner: Person B · Type: Catalyst Advanced I/O Function
 
@@ -10,7 +10,7 @@ Catalyst **Circuits is not available in the Catalyst India DC** (verified
 spec**, but the orchestration itself runs here, in Python, with proper
 async/await fan-out.
 
-This Function is the brain of Yaksha: it routes every investigator
+This Function is the brain of Sarvik: it routes every investigator
 query, fans out specialist tools in parallel, streams the synthesizer's
 answer back to the client over Server-Sent Events, and writes the
 complete audit trail to NoSQL.

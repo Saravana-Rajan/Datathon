@@ -1,6 +1,6 @@
 """KSP Saathi — Orchestrator (Catalyst Advanced I/O Function).
 
-This is the BRAIN of Yaksha. It REPLACES the Catalyst Circuits YAML flow
+This is the BRAIN of Sarvik. It REPLACES the Catalyst Circuits YAML flow
 because Catalyst Circuits is not available in the India DC (see
 ``design.md`` §18 Decision Log 2026-06-16).
 

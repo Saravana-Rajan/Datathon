@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": responseContentType,
         "Cache-Control": "no-store",
-        "X-Yaksha-Trace-Id":
+        "X-Sarvik-Trace-Id":
           upstream.headers.get("x-trace-id") ?? crypto.randomUUID(),
       },
     });

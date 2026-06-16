@@ -1,4 +1,4 @@
-"""Role-based access control tests for Yaksha.
+"""Role-based access control tests for Sarvik.
 
 The 9th feature in the Challenge 01 problem statement is *Role-based
 secure access*. This test module captures the contract we promise:
