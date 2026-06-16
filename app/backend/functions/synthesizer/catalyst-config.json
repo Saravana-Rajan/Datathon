@@ -1,0 +1,33 @@
+{
+  "deployment": {
+    "name": "synthesizer",
+    "stack": "python3.11",
+    "type": "AdvancedIO",
+    "memory": 1024,
+    "timeout": 60,
+    "description": "Streams natural-language answer + viz spec for KSP Saathi (SSE).",
+    "main": "index.handler",
+    "concurrency": 8,
+    "environment_variables": {
+      "LOG_LEVEL": "INFO",
+      "GEMINI_TEXT_MODEL": "gemini-2.5-pro",
+      "GEMINI_SYNTH_MODEL": "gemini-2.5-pro",
+      "QWEN_MODEL": "qwen2.5-14b-instruct",
+      "QWEN_TIMEOUT_S": "45",
+      "AUDIT_NOSQL_COLLECTION": "saathi_audit_log"
+    },
+    "required_secrets": [
+      "GEMINI_API_KEY",
+      "QWEN_API_KEY"
+    ]
+  },
+  "execution": {
+    "main": "index.handler"
+  },
+  "http": {
+    "method": ["POST"],
+    "path": "/synthesizer",
+    "response_type": "stream",
+    "content_type": "text/event-stream"
+  }
+}

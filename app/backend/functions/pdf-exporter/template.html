@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="{{ language }}">
+<head>
+  <meta charset="UTF-8" />
+  <title>KSP Saathi — Case File Export — {{ session.session_id }}</title>
+
+  <style>
+    /* ---------------------------------------------------------------------
+       KSP Saathi PDF — print-friendly A4 stylesheet
+       Color scheme follows KSP visual identity:
+         - Deep navy   #0B2545  (primary, used in letterhead + headings)
+         - Khaki accent #C9A24B (rule lines + badges, picks up the uniform)
+         - Off-white   #FAF7F0  (page background, soft on the eye)
+         - Slate text  #1F2937
+       Kannada glyphs render via @font-face — Noto Sans Kannada primary,
+       Tiro Kannada as a serif fallback for "Section / Officer" labels.
+    --------------------------------------------------------------------- */
+
+    @font-face {
+      font-family: 'Noto Sans Kannada';
+      src: local('Noto Sans Kannada'),
+           url('https://fonts.gstatic.com/s/notosanskannada/v26/8vIs7xs32H97qzQKnzfeXycxXZyU.woff2') format('woff2');
+      font-weight: 400 700;
+      font-style: normal;
+      unicode-range: U+0964-0965, U+0C80-0CFF, U+200C-200D, U+25CC;
+    }
+
+    @font-face {
+      font-family: 'Tiro Kannada';
+      src: local('Tiro Kannada'),
+           url('https://fonts.gstatic.com/s/tirokannada/v6/CSR44ztKmvqaDxEDJFY7CIYKSPl6tOU9Eg.woff2') format('woff2');
+      font-weight: 400;
+      font-style: normal;
+      unicode-range: U+0964-0965, U+0C80-0CFF, U+200C-200D, U+25CC;
+    }
+
+    @page {
+      size: A4;
+      margin: 18mm 16mm 22mm 16mm;
+      @bottom-center {
+        content: "Page " counter(page) " of " counter(pages);
+        font-family: 'Inter', 'Helvetica', sans-serif;
+        font-size: 9pt;
+        color: #6B7280;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #FAF7F0;
+      color: #1F2937;
+      font-family: 'Inter', 'Helvetica Neue', Arial,
+                   'Noto Sans Kannada', sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Kannada-specific text containers — keep glyph rendering correct */
+    .kn, [lang="kn"] {
+      font-family: 'Noto Sans Kannada', 'Tiro Kannada',
+                   'Inter', sans-serif;
+      font-size: 11pt;
+      line-height: 1.7;
+    }
+
+    /* -------------------- Letterhead -------------------- */
+    .letterhead {
+      display: flex;
+      align-items: center;
+      border-bottom: 3px solid #0B2545;
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+    }
+    .letterhead .crest {
+      width: 56px;
+      height: 56px;
+      border: 2px solid #0B2545;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Tiro Kannada', serif;
+      font-size: 26pt;
+      font-weight: 700;
+      color: #0B2545;
+      background: #FAF7F0;
+      margin-right: 14px;
+    }
+    .letterhead .titles {
+      flex: 1;
+    }
+    .letterhead .titles .org-en {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #0B2545;
+      letter-spacing: 0.5px;
+    }
+    .letterhead .titles .org-kn {
+      font-family: 'Noto Sans Kannada', sans-serif;
+      font-size: 12pt;
+      color: #0B2545;
+      margin-top: 2px;
+    }
+    .letterhead .titles .sub {
+      font-size: 9pt;
+      color: #6B7280;
+      margin-top: 4px;
+    }
+    .letterhead .right {
+      text-align: right;
+      font-size: 9pt;
+      color: #1F2937;
+    }
+    .letterhead .right .badge {
+      display: inline-block;
+      background: #C9A24B;
+      color: #0B2545;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      font-size: 8pt;
+    }
+
+    /* -------------------- Document title -------------------- */
+    .doc-title {
+      text-align: center;
+      margin: 6px 0 14px 0;
+    }
+    .doc-title h1 {
+      font-size: 16pt;
+      color: #0B2545;
+      margin: 0;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .doc-title .kn-title {
+      font-family: 'Noto Sans Kannada', sans-serif;
+      font-size: 13pt;
+      color: #0B2545;
+      margin-top: 2px;
+    }
+    .doc-title .strap {
+      font-size: 9pt;
+      color: #6B7280;
+      margin-top: 4px;
+    }
+
+    /* -------------------- Metadata table -------------------- */
+    .meta {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 18px 0;
+      font-size: 10pt;
+    }
+    .meta th, .meta td {
+      border: 1px solid #D1D5DB;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .meta th {
+      background: #F3EFE3;
+      color: #0B2545;
+      font-weight: 700;
+      width: 28%;
+    }
+
+    /* -------------------- Section headings -------------------- */
+    h2.section {
+      color: #0B2545;
+      font-size: 12.5pt;
+      border-bottom: 1.5px solid #C9A24B;
+      padding-bottom: 3px;
+      margin: 22px 0 10px 0;
+      page-break-after: avoid;
+    }
+    h2.section .kn-suffix {
+      font-family: 'Noto Sans Kannada', sans-serif;
+      font-size: 11pt;
+      font-weight: 500;
+      margin-left: 6px;
+      color: #4B5563;
+    }
+
+    /* -------------------- Conversation turns -------------------- */
+    .turn {
+      border-left: 3px solid #0B2545;
+      padding: 8px 12px;
+      margin: 10px 0 14px 0;
+      background: #FFFFFF;
+      page-break-inside: avoid;
+    }
+    .turn .turn-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9pt;
+      color: #6B7280;
+      margin-bottom: 6px;
+      border-bottom: 1px dotted #D1D5DB;
+      padding-bottom: 4px;
+    }
+    .turn .turn-header .turn-no {
+      font-weight: 700;
+      color: #0B2545;
+    }
+    .turn .turn-header .turn-meta { font-style: italic; }
+
+    .qa-block {
+      margin: 6px 0;
+    }
+    .qa-block .label {
+      font-weight: 700;
+      font-size: 9.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .qa-block .label.q { color: #0B2545; }
+    .qa-block .label.a { color: #1F6E3A; }
+    .qa-block .text { margin: 3px 0 0 0; }
+    .qa-block .text.kn {
+      font-family: 'Noto Sans Kannada', sans-serif;
+    }
+
+    /* -------------------- Snapshots (map / graph) -------------------- */
+    .snapshots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0;
+      page-break-inside: avoid;
+    }
+    .snapshot {
+      flex: 1 1 48%;
+      border: 1px solid #D1D5DB;
+      padding: 4px;
+      background: #FFFFFF;
+    }
+    .snapshot .caption {
+      font-size: 8.5pt;
+      color: #6B7280;
+      padding: 4px 2px 2px 2px;
+      text-align: center;
+    }
+    .snapshot img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      border: 0;
+    }
+
+    /* -------------------- Sources / citations -------------------- */
+    .sources {
+      margin-top: 6px;
+      font-size: 9pt;
+      color: #4B5563;
+    }
+    .sources .src-pill {
+      display: inline-block;
+      background: #F3EFE3;
+      color: #0B2545;
+      border: 1px solid #C9A24B;
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin: 1px 3px 1px 0;
+      font-size: 8.5pt;
+    }
+
+    /* -------------------- Audit trail appendix -------------------- */
+    .audit-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+      margin-top: 6px;
+    }
+    .audit-table th, .audit-table td {
+      border: 1px solid #D1D5DB;
+      padding: 4px 6px;
+      vertical-align: top;
+    }
+    .audit-table th {
+      background: #0B2545;
+      color: #FFFFFF;
+      text-align: left;
+    }
+    .audit-table tr:nth-child(even) td {
+      background: #F9F7F1;
+    }
+    .audit-table code {
+      font-family: 'Consolas', 'Menlo', monospace;
+      font-size: 8pt;
+      color: #1F2937;
+      word-break: break-all;
+    }
+
+    /* -------------------- Footer / signature -------------------- */
+    .footer {
+      margin-top: 28px;
+      border-top: 1.5px solid #0B2545;
+      padding-top: 10px;
+      font-size: 9pt;
+      color: #4B5563;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .footer .sig {
+      width: 35%;
+      text-align: center;
+    }
+    .footer .sig .line {
+      border-top: 1px solid #1F2937;
+      margin-top: 36px;
+      padding-top: 3px;
+      font-weight: 700;
+      color: #0B2545;
+    }
+    .footer .stamp {
+      text-align: right;
+      font-style: italic;
+    }
+    .footer .stamp .generated {
+      color: #0B2545;
+      font-weight: 700;
+      font-style: normal;
+    }
+
+    .pagebreak { page-break-before: always; }
+
+    .legal {
+      font-size: 8pt;
+      color: #6B7280;
+      margin-top: 6px;
+      text-align: justify;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===================== LETTERHEAD ===================== -->
+  <header class="letterhead">
+    <div class="crest" aria-hidden="true">ಕ</div>
+    <div class="titles">
+      <div class="org-en">KARNATAKA STATE POLICE</div>
+      <div class="org-kn">ಕರ್ನಾಟಕ ರಾಜ್ಯ ಪೋಲೀಸ್</div>
+      <div class="sub">State Crime Records Bureau (SCRB) &nbsp;|&nbsp; KSP Saathi Conversational Assistant</div>
+    </div>
+    <div class="right">
+      <div><span class="badge">CASE FILE</span></div>
+      <div style="margin-top:4px;">Generated&nbsp;{{ generated_at }}</div>
+      <div>Session&nbsp;<strong>{{ session.session_id }}</strong></div>
+    </div>
+  </header>
+
+  <!-- ===================== TITLE ===================== -->
+  <div class="doc-title">
+    <h1>Investigator Conversation Transcript</h1>
+    <div class="kn-title">ತನಿಖಾಧಿಕಾರಿಯ ಸಂಭಾಷಣಾ ದಾಖಲೆ</div>
+    <div class="strap">Official case-file export &middot; IT Act 2008 compliant &middot; India data residency</div>
+  </div>
+
+  <!-- ===================== SESSION METADATA ===================== -->
+  <table class="meta">
+    <tr>
+      <th>Officer / ಅಧಿಕಾರಿ</th>
+      <td>{{ session.officer_name | default('—', true) }}</td>
+    </tr>
+    <tr>
+      <th>Role / ಹುದ್ದೆ</th>
+      <td>{{ session.officer_role | default('—', true) }}</td>
+    </tr>
+    <tr>
+      <th>Jurisdiction / ವ್ಯಾಪ್ತಿ</th>
+      <td>{{ session.jurisdiction | default('—', true) }}</td>
+    </tr>
+    <tr>
+      <th>Session Start / ಪ್ರಾರಂಭ ಸಮಯ</th>
+      <td>{{ session.start_time | default('—', true) }}</td>
+    </tr>
+    <tr>
+      <th>Session End / ಮುಕ್ತಾಯ ಸಮಯ</th>
+      <td>{{ session.end_time | default('—', true) }}</td>
+    </tr>
+    <tr>
+      <th>Total Turns / ಒಟ್ಟು ತಿರುವುಗಳು</th>
+      <td>{{ turns | length }}</td>
+    </tr>
+    <tr>
+      <th>Language Preference / ಭಾಷೆ</th>
+      <td>{{ language_label }}</td>
+    </tr>
+    <tr>
+      <th>Export Request ID</th>
+      <td><code>{{ export_request_id }}</code></td>
+    </tr>
+  </table>
+
+  <!-- ===================== CONVERSATION ===================== -->
+  <h2 class="section">Conversation Transcript <span class="kn-suffix">| ಸಂಭಾಷಣೆ</span></h2>
+
+  {% if turns | length == 0 %}
+    <p><em>No turns recorded for this session.</em></p>
+  {% endif %}
+
+  {% for turn in turns %}
+    <div class="turn">
+      <div class="turn-header">
+        <span class="turn-no">Turn #{{ loop.index }} &middot; ತಿರುವು #{{ loop.index }}</span>
+        <span class="turn-meta">
+          {{ turn.timestamp | default('—', true) }}
+          {% if turn.language %}&middot; lang: <strong>{{ turn.language }}</strong>{% endif %}
+          {% if turn.intent %}&middot; intent: <strong>{{ turn.intent }}</strong>{% endif %}
+          {% if turn.latency_ms is not none %}&middot; {{ turn.latency_ms }} ms{% endif %}
+        </span>
+      </div>
+
+      {# ---- Officer's question (always show; render Kannada if present and requested) ---- #}
+      {% if show_en and turn.query_en %}
+        <div class="qa-block">
+          <div class="label q">Officer Question (EN)</div>
+          <div class="text">{{ turn.query_en }}</div>
+        </div>
+      {% endif %}
+      {% if show_kn and turn.query_kn %}
+        <div class="qa-block">
+          <div class="label q">ಅಧಿಕಾರಿಯ ಪ್ರಶ್ನೆ (KN)</div>
+          <div class="text kn" lang="kn">{{ turn.query_kn }}</div>
+        </div>
+      {% endif %}
+      {% if not turn.query_en and not turn.query_kn and turn.raw_query %}
+        <div class="qa-block">
+          <div class="label q">Officer Question</div>
+          <div class="text {% if turn.language == 'kn' %}kn{% endif %}"
+               {% if turn.language == 'kn' %}lang="kn"{% endif %}>
+            {{ turn.raw_query }}
+          </div>
+        </div>
+      {% endif %}
+
+      {# ---- Saathi's answer ---- #}
+      {% if show_en and turn.response_en %}
+        <div class="qa-block">
+          <div class="label a">KSP Saathi (EN)</div>
+          <div class="text">{{ turn.response_en }}</div>
+        </div>
+      {% endif %}
+      {% if show_kn and turn.response_kn %}
+        <div class="qa-block">
+          <div class="label a">ಕೆಎಸ್‌ಪಿ ಸಾಥಿ (KN)</div>
+          <div class="text kn" lang="kn">{{ turn.response_kn }}</div>
+        </div>
+      {% endif %}
+      {% if not turn.response_en and not turn.response_kn and turn.response %}
+        <div class="qa-block">
+          <div class="label a">KSP Saathi</div>
+          <div class="text {% if turn.language == 'kn' %}kn{% endif %}"
+               {% if turn.language == 'kn' %}lang="kn"{% endif %}>
+            {{ turn.response }}
+          </div>
+        </div>
+      {% endif %}
+
+      {# ---- Embedded snapshots ---- #}
+      {% if turn.map_snapshot_data_uri or turn.graph_snapshot_data_uri %}
+        <div class="snapshots">
+          {% if turn.map_snapshot_data_uri %}
+            <div class="snapshot">
+              <img src="{{ turn.map_snapshot_data_uri }}" alt="Map snapshot for turn {{ loop.index }}" />
+              <div class="caption">
+                Map view &middot; ನಕ್ಷೆ
+                {% if turn.viz_spec and turn.viz_spec.map and turn.viz_spec.map.center %}
+                  &middot; centred {{ turn.viz_spec.map.center.lat }}, {{ turn.viz_spec.map.center.lng }}
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+          {% if turn.graph_snapshot_data_uri %}
+            <div class="snapshot">
+              <img src="{{ turn.graph_snapshot_data_uri }}" alt="Network graph snapshot for turn {{ loop.index }}" />
+              <div class="caption">
+                Criminal network &middot; ಅಪರಾಧ ಜಾಲ
+                {% if turn.viz_spec and turn.viz_spec.graph and turn.viz_spec.graph.node_count %}
+                  &middot; {{ turn.viz_spec.graph.node_count }} nodes
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {# ---- Sources / citations ---- #}
+      {% if turn.sources and turn.sources | length > 0 %}
+        <div class="sources">
+          <strong>Sources / ಆಧಾರಗಳು:</strong>
+          {% for src in turn.sources %}
+            <span class="src-pill">{{ src.id | default(src, true) }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  <!-- ===================== AUDIT APPENDIX ===================== -->
+  {% if include_audit and audit_entries and audit_entries | length > 0 %}
+    <div class="pagebreak"></div>
+    <h2 class="section">Audit Trail Appendix <span class="kn-suffix">| ಆಡಿಟ್ ದಾಖಲೆ</span></h2>
+    <p class="legal">
+      Per IT Act 2008 &sect; 67C and DPDP Act 2023, every interaction with the
+      KSP Saathi system is logged immutably. The appendix below reproduces the
+      complete chain of intent routing, tool invocations, data accessed and
+      model outputs for each conversation turn in this session.
+    </p>
+
+    <table class="audit-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Request ID</th>
+          <th>Timestamp (UTC)</th>
+          <th>Intent</th>
+          <th>Route Decision</th>
+          <th>SQL / Cypher</th>
+          <th>Data Accessed</th>
+          <th>Conf.</th>
+          <th>Latency</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in audit_entries %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><code>{{ a.request_id | default('—', true) }}</code></td>
+            <td>{{ a.ts_iso | default(a.ts, true) }}</td>
+            <td>{{ a.intent | default('—', true) }}</td>
+            <td>{{ a.route_decision | default(a.intent, true) }}</td>
+            <td><code>{{ (a.sql or a.cypher or '—') | truncate(140, true) }}</code></td>
+            <td>
+              {% if a.sources %}
+                {% for s in a.sources %}{{ s.id | default(s, true) }}{% if not loop.last %}, {% endif %}{% endfor %}
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ '%.2f' | format(a.confidence) if a.confidence is not none else '—' }}</td>
+            <td>{{ a.latency_ms | default('—', true) }} ms</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer">
+    <div>
+      <strong>Generated by KSP Saathi v1.0</strong><br/>
+      Karnataka State Police &middot; State Crime Records Bureau<br/>
+      Hosted on Zoho Catalyst &middot; India data residency
+    </div>
+    <div class="sig">
+      <div class="line">Authorised Signature / ಅಧಿಕೃತ ಸಹಿ</div>
+    </div>
+    <div class="stamp">
+      <span class="generated">{{ generated_at }}</span><br/>
+      Export ID: <code>{{ export_request_id }}</code><br/>
+      This is a system-generated document.
+    </div>
+  </footer>
+
+</body>
+</html>

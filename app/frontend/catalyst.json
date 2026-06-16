@@ -1,0 +1,11 @@
+{
+  "client": {
+    "name": "ksp-saathi-frontend",
+    "source": "out",
+    "index_page": "index.html",
+    "error_page": "404.html",
+    "stack": "node18",
+    "build_command": "npm run build",
+    "deploy_path": "out"
+  }
+}

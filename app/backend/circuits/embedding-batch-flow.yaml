@@ -1,0 +1,102 @@
+# =====================================================================
+# KSP Saathi — Embedding Batch Flow (scheduled cron)
+# ---------------------------------------------------------------------
+# Runs every 6 hours. Finds newly-ingested FIRs with no embedding yet
+# and pushes them through the embedder (Catalyst QuickML RAG primary;
+# gemini-embedding-001 fallback per design.md §10).
+#
+# Trigger note: In the India DC where Circuits is unavailable, this
+# spec is implemented by Catalyst Cron → Function (`embed-new-firs`)
+# directly. See README.md.
+# =====================================================================
+
+apiVersion: catalyst.zoho.com/circuits/v1   # verify schema
+kind: Circuit
+metadata:
+  name: embedding-batch-flow
+  description: Backfill embeddings for newly-ingested FIRs.
+  owner: person-b
+  version: 0.1.0
+  tags: [ksp-saathi, batch, rag, cron]
+
+# ---------------------------------------------------------------------
+# Trigger — Catalyst Cron, every 6 hours
+# ---------------------------------------------------------------------
+trigger:
+  type: cron
+  schedule: "0 */6 * * *"           # at minute 0, every 6 hours (UTC; IST offset handled by Catalyst Cron config)
+  timezone: Asia/Kolkata
+  enabled: true
+  description: "Every 6 hours — 05:30, 11:30, 17:30, 23:30 IST"
+
+# ---------------------------------------------------------------------
+# Execution policy
+# ---------------------------------------------------------------------
+execution:
+  total_timeout_ms: 900000           # 15-min cap per run
+  default_retry:
+    max_attempts: 3
+    backoff_ms: 5000
+    retry_on: [TIMEOUT, 5xx, NETWORK, RATE_LIMITED]
+  on_error: log_and_alert            # CRON failure pages Person B via Catalyst Mail
+
+# ---------------------------------------------------------------------
+# Input — synthesised by the cron driver
+# ---------------------------------------------------------------------
+input:
+  type: object
+  properties:
+    batch_size:      { type: integer, default: 500, description: "FIRs per invocation" }
+    max_batches:     { type: integer, default: 20,  description: "Safety cap per run" }
+    embedder:        { type: string,  enum: [quickml-rag, gemini-embedding-001], default: quickml-rag }
+    dry_run:         { type: boolean, default: false }
+
+# ---------------------------------------------------------------------
+# Steps
+# ---------------------------------------------------------------------
+steps:
+  - id: embed
+    name: Find + embed new FIRs
+    function: embed-new-firs        # placeholder — Person A/B
+    type: http_invoke
+    method: POST
+    timeout_ms: 900000
+    input:
+      batch_size:  "{{ input.batch_size }}"
+      max_batches: "{{ input.max_batches }}"
+      embedder:    "{{ input.embedder }}"
+      dry_run:     "{{ input.dry_run }}"
+    output_schema:
+      type: object
+      properties:
+        scanned:      { type: integer, description: "FIRs inspected" }
+        embedded:     { type: integer, description: "FIRs newly embedded this run" }
+        skipped:      { type: integer, description: "Already embedded / no narrative" }
+        failed:       { type: integer }
+        elapsed_ms:   { type: integer }
+        next_cursor:  { type: string,  description: "Resume token for next run" }
+
+# ---------------------------------------------------------------------
+# Output — logged for the cron dashboard
+# ---------------------------------------------------------------------
+output:
+  payload:
+    run_at:     "{{ runtime.started_at }}"
+    scanned:    "{{ embed.output.scanned }}"
+    embedded:   "{{ embed.output.embedded }}"
+    failed:     "{{ embed.output.failed }}"
+    next_cursor:"{{ embed.output.next_cursor }}"
+
+# ---------------------------------------------------------------------
+# Alerting
+# ---------------------------------------------------------------------
+alerts:
+  - on: failure
+    via: catalyst-mail
+    to:  ["saravanarajan.b@techjays.com"]
+    subject: "[KSP Saathi] embedding-batch-flow failed at {{ runtime.started_at }}"
+  - on: success_with_failed_gt
+    threshold: 50
+    via: catalyst-mail
+    to:  ["saravanarajan.b@techjays.com"]
+    subject: "[KSP Saathi] embedding backlog: {{ embed.output.failed }} failures"

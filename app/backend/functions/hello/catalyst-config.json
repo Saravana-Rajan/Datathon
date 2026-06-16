@@ -1,0 +1,11 @@
+{
+  "deployment": {
+    "name": "hello",
+    "stack": "python3.11",
+    "memory": 256,
+    "timeout": 10
+  },
+  "execution": {
+    "main": "index.handler"
+  }
+}

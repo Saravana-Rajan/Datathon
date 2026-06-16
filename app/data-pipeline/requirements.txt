@@ -1,0 +1,7 @@
+# Data pipeline — FIR JSONL → Catalyst Data Store + embeddings + graph
+# Python 3.10+
+
+zcatalyst-sdk>=1.0.0      # Zoho Catalyst Python SDK (Data Store, NoSQL, ZCQL)
+tqdm>=4.66.0              # progress bar for 50K-row uploads
+google-genai>=0.3.0       # Gemini embeddings (embed_narratives.py, vector_search.py)
+numpy>=1.26.0             # cosine search in vector_search.py

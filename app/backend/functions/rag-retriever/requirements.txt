@@ -1,0 +1,5 @@
+zcatalyst-sdk>=1.5.0
+google-genai>=0.3.0
+numpy>=1.26.0
+requests>=2.31.0
+python-dotenv>=1.0.0

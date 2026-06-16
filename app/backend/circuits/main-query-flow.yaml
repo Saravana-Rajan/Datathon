@@ -1,0 +1,286 @@
+# =====================================================================
+# KSP Saathi — Main Query Flow
+# ---------------------------------------------------------------------
+# Catalyst Circuits orchestration spec for a full investigator query.
+#
+# IMPORTANT — DC AVAILABILITY GOTCHA:
+#   Catalyst Circuits is NOT natively available in the India DC
+#   (per docs/catalyst-reference.md §8). This YAML is the AUTHORITATIVE
+#   ORCHESTRATION SPEC. It is consumed two ways:
+#     1. As-is by Catalyst Circuits if/when deployed in a supported DC
+#        (US / JP / SA — schema follows the documented Basic I/O shape).
+#     2. As the contract that `functions/orchestrator/` (in-Python
+#        fan-out using app.function('x').execute(...)) implements for
+#        the India DC deployment. Person B mirrors this YAML in Python.
+#
+# Schema note: Catalyst's native circuit format is JSON authored via
+# console drag-drop. This YAML uses the closest reasonable shape based
+# on the documented Basic I/O constraints (HTTP GET, JSON in/out, no
+# Cron/Event/Advanced I/O participants). // verify schema at workshop.
+# =====================================================================
+
+apiVersion: catalyst.zoho.com/circuits/v1   # verify schema
+kind: Circuit
+metadata:
+  name: main-query-flow
+  description: >
+    Full conversational query orchestration: route intent → fan-out
+    specialists → synthesize streaming answer → audit.
+  owner: person-b
+  version: 0.1.0
+  tags: [ksp-saathi, primary, voice, text]
+
+# ---------------------------------------------------------------------
+# Input contract (from API Gateway → Circuit)
+# ---------------------------------------------------------------------
+input:
+  type: object
+  required: [request_id, query, session_id, user_role]
+  properties:
+    request_id:    { type: string, description: "UUIDv4 — propagated to every step + audit" }
+    query:         { type: string, description: "Raw natural-language query" }
+    language_hint: { type: string, enum: [auto, en, kn, hi], default: auto }
+    session_id:    { type: string, description: "30-min session id from Catalyst Auth" }
+    user_role:     { type: string, enum: [constable, sub_inspector, inspector, sho, dcp, scrb_analyst, admin] }
+
+# ---------------------------------------------------------------------
+# Global execution policy
+# ---------------------------------------------------------------------
+execution:
+  total_timeout_ms: 30000          # 30s hard ceiling
+  default_retry:
+    max_attempts: 2                # 1 retry on transient errors
+    backoff_ms: 250
+    retry_on: [TIMEOUT, 5xx, NETWORK]
+  on_error: continue_with_warnings # critical: synthesizer always runs
+  streaming: true                  # synthesizer streams output back
+  trace_id_from: input.request_id
+
+# ---------------------------------------------------------------------
+# Steps
+# ---------------------------------------------------------------------
+steps:
+
+  # ------- STEP 1 — Intent routing (Qwen 2.5 7B via QuickML) -------
+  - id: route
+    name: Classify query intent
+    function: intent-router          # Catalyst Basic I/O function
+    type: http_invoke
+    method: POST
+    timeout_ms: 1500
+    input:
+      request_id:    "{{ input.request_id }}"
+      query:         "{{ input.query }}"
+      language_hint: "{{ input.language_hint }}"
+      user_role:     "{{ input.user_role }}"
+    output_schema:
+      type: object
+      properties:
+        intents:          { type: array, items: { type: string, enum: [tabular, graph, semantic, lookup, predictive, geo, meta] } }
+        confidence:       { type: number }
+        normalized_query: { type: string }
+        detected_language:{ type: string }
+        entities:         { type: object }
+    retry:
+      max_attempts: 2
+      backoff_ms: 200
+
+  # ------- STEP 2 — Parallel specialist fan-out --------------------
+  # All branches run concurrently. Each branch is conditional on the
+  # intents emitted by step `route`. Any branch may fail; the
+  # synthesizer will run with whatever results are available + warnings.
+  - id: specialists
+    name: Parallel specialist execution
+    type: parallel
+    depends_on: [route]
+    fail_strategy: collect_partial   # never abort siblings
+    branches:
+
+      # 2a — Tabular SQL on Catalyst Data Store
+      - id: tabular
+        when: "{{ 'tabular' in route.output.intents }}"
+        function: sql-generator
+        type: http_invoke
+        method: POST
+        timeout_ms: 6000
+        input:
+          request_id:       "{{ input.request_id }}"
+          normalized_query: "{{ route.output.normalized_query }}"
+          entities:         "{{ route.output.entities }}"
+          user_role:        "{{ input.user_role }}"
+          mode:             tabular
+        output_schema:
+          type: object
+          properties:
+            sql:     { type: string }
+            rows:    { type: array }
+            row_count: { type: integer }
+
+      # 2b — Graph Cypher on Neo4j AuraDB
+      - id: graph
+        when: "{{ 'graph' in route.output.intents }}"
+        function: cypher-generator
+        type: http_invoke
+        method: POST
+        timeout_ms: 6000
+        input:
+          request_id:       "{{ input.request_id }}"
+          normalized_query: "{{ route.output.normalized_query }}"
+          entities:         "{{ route.output.entities }}"
+          user_role:        "{{ input.user_role }}"
+        output_schema:
+          type: object
+          properties:
+            cypher: { type: string }
+            nodes:  { type: array }
+            edges:  { type: array }
+
+      # 2c — Semantic / lookup RAG on QuickML RAG (+ Gemini embeddings fallback)
+      - id: rag
+        when: "{{ 'semantic' in route.output.intents or 'lookup' in route.output.intents }}"
+        function: rag-retriever
+        type: http_invoke
+        method: POST
+        timeout_ms: 5000
+        input:
+          request_id:       "{{ input.request_id }}"
+          normalized_query: "{{ route.output.normalized_query }}"
+          language:         "{{ route.output.detected_language }}"
+          top_k:            8
+          user_role:        "{{ input.user_role }}"
+        output_schema:
+          type: object
+          properties:
+            chunks: { type: array }
+            sources:{ type: array }
+
+      # 2d — Predictive (Zia AutoML) — placeholder function
+      - id: predictive
+        when: "{{ 'predictive' in route.output.intents }}"
+        function: predictive-service     # placeholder — Person C
+        type: http_invoke
+        method: POST
+        timeout_ms: 8000
+        input:
+          request_id:       "{{ input.request_id }}"
+          normalized_query: "{{ route.output.normalized_query }}"
+          entities:         "{{ route.output.entities }}"
+        output_schema:
+          type: object
+          properties:
+            forecast:        { type: array }
+            confidence_lo:   { type: number }
+            confidence_hi:   { type: number }
+            top_features:    { type: array }
+
+      # 2e — Geo / hotspot — reuses sql-generator with geo filter,
+      #      then post-processes via H3 hotspot indexer
+      - id: geo
+        when: "{{ 'geo' in route.output.intents }}"
+        type: sequence
+        steps:
+          - id: geo_sql
+            function: sql-generator
+            type: http_invoke
+            method: POST
+            timeout_ms: 6000
+            input:
+              request_id:       "{{ input.request_id }}"
+              normalized_query: "{{ route.output.normalized_query }}"
+              entities:         "{{ route.output.entities }}"
+              user_role:        "{{ input.user_role }}"
+              mode:             geo
+              geo_filter:       "{{ route.output.entities.geo | default(null) }}"
+          - id: hotspot
+            function: h3-hotspot-indexer    # placeholder — Person A/C
+            type: http_invoke
+            method: POST
+            timeout_ms: 3000
+            input:
+              request_id: "{{ input.request_id }}"
+              rows:       "{{ geo_sql.output.rows }}"
+              h3_res:     8
+        output_schema:
+          type: object
+          properties:
+            rows:     { type: array }
+            hotspots: { type: array }
+
+  # ------- STEP 3 — Synthesizer (streams answer back to client) ----
+  # Runs even if some branches failed. `warnings` carries any partials.
+  - id: synthesize
+    name: Stream final answer
+    function: synthesizer
+    type: http_invoke
+    method: POST
+    depends_on: [route, specialists]
+    timeout_ms: 12000
+    streaming: true                   # tokens stream back to API gateway → client
+    on_partial_inputs: proceed        # don't block on failed branches
+    input:
+      request_id:       "{{ input.request_id }}"
+      session_id:       "{{ input.session_id }}"
+      user_role:        "{{ input.user_role }}"
+      detected_language:"{{ route.output.detected_language }}"
+      router_output:    "{{ route.output }}"
+      tool_results:
+        tabular:    "{{ specialists.branches.tabular.output    | default(null) }}"
+        graph:      "{{ specialists.branches.graph.output      | default(null) }}"
+        rag:        "{{ specialists.branches.rag.output        | default(null) }}"
+        predictive: "{{ specialists.branches.predictive.output | default(null) }}"
+        geo:        "{{ specialists.branches.geo.output        | default(null) }}"
+      warnings:        "{{ specialists.errors | default([]) }}"
+    output_schema:
+      type: object
+      properties:
+        answer_stream_url: { type: string, description: "WS/SSE URL for live tokens" }
+        final_answer:      { type: string }
+        sources:           { type: array }
+        confidence:        { type: number }
+        response_language: { type: string }
+    retry:
+      max_attempts: 1                # synthesis retries are expensive; only retry once
+
+  # ------- STEP 4 — Audit logger (fire-and-forget, but awaited) ----
+  - id: audit
+    name: Write complete chain to NoSQL
+    function: audit-logger
+    type: http_invoke
+    method: POST
+    depends_on: [synthesize]
+    timeout_ms: 2000
+    fire_and_forget: false           # we want the ack but never block UX
+    on_error: log_only               # audit failure must NOT fail the user query
+    input:
+      request_id:        "{{ input.request_id }}"
+      session_id:        "{{ input.session_id }}"
+      user_role:         "{{ input.user_role }}"
+      raw_query:         "{{ input.query }}"
+      language:          "{{ route.output.detected_language }}"
+      intent_router:     "{{ route.output }}"
+      tool_calls:
+        tabular:    "{{ specialists.branches.tabular    | default(null) }}"
+        graph:      "{{ specialists.branches.graph      | default(null) }}"
+        rag:        "{{ specialists.branches.rag        | default(null) }}"
+        predictive: "{{ specialists.branches.predictive | default(null) }}"
+        geo:        "{{ specialists.branches.geo        | default(null) }}"
+      warnings:          "{{ specialists.errors | default([]) }}"
+      final_answer:      "{{ synthesize.output.final_answer }}"
+      sources:           "{{ synthesize.output.sources }}"
+      confidence:        "{{ synthesize.output.confidence }}"
+      latency_ms:        "{{ runtime.elapsed_ms }}"
+
+# ---------------------------------------------------------------------
+# Output (returned to API Gateway → frontend)
+# ---------------------------------------------------------------------
+output:
+  stream_from: synthesize             # client subscribes to the synth stream
+  payload:
+    request_id:        "{{ input.request_id }}"
+    answer_stream_url: "{{ synthesize.output.answer_stream_url }}"
+    final_answer:      "{{ synthesize.output.final_answer }}"
+    sources:           "{{ synthesize.output.sources }}"
+    confidence:        "{{ synthesize.output.confidence }}"
+    response_language: "{{ synthesize.output.response_language }}"
+    warnings:          "{{ specialists.errors | default([]) }}"
+    audit_id:          "{{ audit.output.audit_id | default(null) }}"

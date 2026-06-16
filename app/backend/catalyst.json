@@ -1,0 +1,45 @@
+{
+  "project_id": "60074155874XXXXXXXX",
+  "project_name": "ksp-saathi-backend",
+  "region": "IN",
+  "data_center": "console.catalyst.zoho.in",
+  "environment": "Development",
+  "features": {
+    "functions": {
+      "enabled": true,
+      "directory": "functions"
+    },
+    "datastore": {
+      "enabled": true
+    },
+    "nosql": {
+      "enabled": true
+    },
+    "stratus": {
+      "enabled": true
+    },
+    "cache": {
+      "enabled": true
+    },
+    "web-client-hosting": {
+      "enabled": true
+    },
+    "authentication": {
+      "enabled": true
+    },
+    "circuits": {
+      "enabled": true,
+      "directory": "circuits"
+    },
+    "smartbrowz": {
+      "enabled": true
+    },
+    "zia": {
+      "enabled": true
+    }
+  },
+  "stacks": {
+    "python": "3.11"
+  },
+  "notes": "Replace project_id with the real Catalyst project id from console.catalyst.zoho.in once provisioned."
+}

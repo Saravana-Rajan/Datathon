@@ -1,0 +1,73 @@
+# === Yaksha / KSP Saathi root .gitignore ===
+
+# Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+service-account*.json
+
+# Large generated data — keep schema + sample, NOT full 50K records
+data/firs.jsonl
+data/firs.csv
+data/*.parquet
+data/embeddings.jsonl
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Catalyst CLI
+.catalyst/
+catalyst-temp/
+.zcatalyst/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Playwright transcript artifacts from doc-harvest sessions
+.playwright-mcp/
+
+# Claude harness
+.claude/settings.local.json
+
+# Validation test audio (large + dev-only)
+app/validation/audio_*.wav
+app/validation/tts_*.wav
+app/validation/tts_*.mp3

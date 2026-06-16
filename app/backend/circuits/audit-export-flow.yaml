@@ -1,0 +1,214 @@
+# =====================================================================
+# KSP Saathi — Audit Export Flow (PDF, on-demand)
+# ---------------------------------------------------------------------
+# Triggered when the user clicks "Export PDF" in the audit drawer.
+# Pulls the full audit chain from NoSQL, renders an HTML template,
+# converts to PDF via Catalyst SmartBrowz, saves to Stratus, and
+# emails the signed link to the officer via Catalyst Mail.
+#
+# Covers Feature 5.4 (PDF export of conversation history) +
+# Feature 5.8 (Explainable AI audit trails).
+# =====================================================================
+
+apiVersion: catalyst.zoho.com/circuits/v1   # verify schema
+kind: Circuit
+metadata:
+  name: audit-export-flow
+  description: Export a session's audit chain as branded PDF, save to Stratus, email link.
+  owner: person-b
+  version: 0.1.0
+  tags: [ksp-saathi, pdf, audit, on-demand]
+
+# ---------------------------------------------------------------------
+# Trigger — manual (REST from frontend "Export PDF" button)
+# ---------------------------------------------------------------------
+trigger:
+  type: http
+  method: POST
+  path: /api/audit/export
+  auth: catalyst-auth                # JWT validated at API Gateway
+  rate_limit:
+    per_user_per_min: 5
+
+# ---------------------------------------------------------------------
+# Execution policy
+# ---------------------------------------------------------------------
+execution:
+  total_timeout_ms: 60000            # 60s — SmartBrowz render can be slow
+  default_retry:
+    max_attempts: 2
+    backoff_ms: 1000
+    retry_on: [TIMEOUT, 5xx]
+  on_error: respond_with_failure     # user sees an error toast
+
+# ---------------------------------------------------------------------
+# Input — from the frontend
+# ---------------------------------------------------------------------
+input:
+  type: object
+  required: [request_id, session_id, user_id, user_role, user_email]
+  properties:
+    request_id:    { type: string }
+    session_id:    { type: string, description: "Which session's audit chain to export" }
+    user_id:       { type: string }
+    user_role:     { type: string }
+    user_email:    { type: string, format: email }
+    language:      { type: string, enum: [en, kn], default: en }
+    include_map:   { type: boolean, default: true }
+    include_graph: { type: boolean, default: true }
+
+# ---------------------------------------------------------------------
+# Steps
+# ---------------------------------------------------------------------
+steps:
+
+  # 1 — Pull the audit chain from Catalyst NoSQL
+  - id: fetch
+    name: Fetch audit chain from NoSQL
+    function: audit-fetcher          # reads the `audit_log` collection
+    type: http_invoke
+    method: POST
+    timeout_ms: 4000
+    input:
+      request_id: "{{ input.request_id }}"
+      session_id: "{{ input.session_id }}"
+      user_id:    "{{ input.user_id }}"
+      user_role:  "{{ input.user_role }}"        # RBAC mask applied server-side
+    output_schema:
+      type: object
+      properties:
+        session_meta: { type: object }
+        turns:        { type: array }
+        total_turns:  { type: integer }
+
+  # 2 — Render the audit HTML template
+  - id: render_html
+    name: Format audit chain with HTML template
+    function: pdf-template-renderer
+    type: http_invoke
+    method: POST
+    depends_on: [fetch]
+    timeout_ms: 4000
+    input:
+      request_id:    "{{ input.request_id }}"
+      template:      ksp-saathi-audit-v1
+      language:      "{{ input.language }}"
+      session_meta:  "{{ fetch.output.session_meta }}"
+      turns:         "{{ fetch.output.turns }}"
+      include_map:   "{{ input.include_map }}"
+      include_graph: "{{ input.include_graph }}"
+      branding:
+        logo_url:    "https://saathi.ksp.local/static/logo.svg"
+        watermark:   "Karnataka State Police — Official Use Only"
+    output_schema:
+      type: object
+      properties:
+        html: { type: string, description: "Fully-resolved HTML ready for SmartBrowz" }
+
+  # 3 — Render HTML → PDF via Catalyst SmartBrowz
+  - id: render_pdf
+    name: Render PDF via SmartBrowz
+    function: smartbrowz-pdf         # thin wrapper around app.browser_logic().convert_to_pdf
+    type: http_invoke
+    method: POST
+    depends_on: [render_html]
+    timeout_ms: 30000
+    input:
+      request_id: "{{ input.request_id }}"
+      html:       "{{ render_html.output.html }}"
+      options:
+        page_size:   A4
+        margin_mm:   12
+        font_family: "Noto Sans Kannada"    # Kannada glyphs (design.md §17 open Q6)
+        header_html: "<div style='font-size:9px'>KSP Saathi — {{ input.session_id }}</div>"
+        footer_html: "<div style='font-size:9px'>Page <span class='pageNumber'></span> of <span class='totalPages'></span></div>"
+    output_schema:
+      type: object
+      properties:
+        pdf_bytes_b64: { type: string }
+        page_count:    { type: integer }
+        byte_size:     { type: integer }
+
+  # 4 — Save the PDF to Catalyst Stratus
+  - id: save
+    name: Save PDF to Stratus
+    function: stratus-uploader
+    type: http_invoke
+    method: POST
+    depends_on: [render_pdf]
+    timeout_ms: 8000
+    input:
+      request_id:    "{{ input.request_id }}"
+      bucket:        ksp-saathi-exports
+      object_key:    "audits/{{ input.user_id }}/{{ input.session_id }}-{{ runtime.started_at }}.pdf"
+      content_b64:   "{{ render_pdf.output.pdf_bytes_b64 }}"
+      content_type:  application/pdf
+      ttl_days:      30                       # signed URL valid 30 days
+      metadata:
+        user_id:    "{{ input.user_id }}"
+        session_id: "{{ input.session_id }}"
+        user_role:  "{{ input.user_role }}"
+    output_schema:
+      type: object
+      properties:
+        object_key:  { type: string }
+        signed_url:  { type: string }
+        expires_at:  { type: string }
+
+  # 5 — Email the signed link via Catalyst Mail
+  - id: mail
+    name: Email PDF link to officer
+    function: mail-sender
+    type: http_invoke
+    method: POST
+    depends_on: [save]
+    timeout_ms: 5000
+    on_error: log_only               # if mail fails, frontend still got the link in step `save`
+    input:
+      request_id: "{{ input.request_id }}"
+      to:         "{{ input.user_email }}"
+      template:   ksp-saathi-pdf-ready
+      language:   "{{ input.language }}"
+      variables:
+        session_id: "{{ input.session_id }}"
+        signed_url: "{{ save.output.signed_url }}"
+        expires_at: "{{ save.output.expires_at }}"
+        page_count: "{{ render_pdf.output.page_count }}"
+    output_schema:
+      type: object
+      properties:
+        message_id: { type: string }
+        sent_at:    { type: string }
+
+  # 6 — Write the export action to the audit log itself
+  - id: audit
+    name: Log the export action
+    function: audit-logger
+    type: http_invoke
+    method: POST
+    depends_on: [mail]
+    timeout_ms: 2000
+    on_error: log_only
+    input:
+      request_id: "{{ input.request_id }}"
+      session_id: "{{ input.session_id }}"
+      user_id:    "{{ input.user_id }}"
+      user_role:  "{{ input.user_role }}"
+      action:     pdf_export
+      details:
+        object_key:  "{{ save.output.object_key }}"
+        page_count:  "{{ render_pdf.output.page_count }}"
+        byte_size:   "{{ render_pdf.output.byte_size }}"
+        mail_id:     "{{ mail.output.message_id | default(null) }}"
+
+# ---------------------------------------------------------------------
+# Output — returned to the frontend immediately after `save`
+# ---------------------------------------------------------------------
+output:
+  payload:
+    request_id:  "{{ input.request_id }}"
+    signed_url:  "{{ save.output.signed_url }}"
+    object_key:  "{{ save.output.object_key }}"
+    page_count:  "{{ render_pdf.output.page_count }}"
+    expires_at:  "{{ save.output.expires_at }}"
+    email_sent:  "{{ mail.output.message_id is defined }}"

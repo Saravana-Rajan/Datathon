@@ -1,0 +1,21 @@
+{
+  "deployment": {
+    "name": "intent-router",
+    "type": "advancedio",
+    "stack": "python3.11",
+    "memory": 512,
+    "timeout": 15,
+    "description": "KSP Saathi intent router — classifies queries into tabular/graph/geo/predictive/lookup/meta/mixed using Qwen 2.5 7B on QuickML.",
+    "source": "index.py",
+    "main_handler": "handler"
+  },
+  "execution": {
+    "main": "index.py"
+  },
+  "env_variables": {
+    "LOG_LEVEL": "INFO",
+    "ROUTER_MIN_CONFIDENCE": "0.35",
+    "ROUTER_TIMEOUT_S": "8.0",
+    "CATALYST_QUICKML_ROUTER_MODEL": "qwen2.5-7b-instruct"
+  }
+}

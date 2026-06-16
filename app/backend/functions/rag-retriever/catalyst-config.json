@@ -1,0 +1,11 @@
+{
+  "deployment": {
+    "name": "rag-retriever",
+    "stack": "python3.11",
+    "memory": 512,
+    "timeout": 20
+  },
+  "execution": {
+    "main": "index.handler"
+  }
+}
