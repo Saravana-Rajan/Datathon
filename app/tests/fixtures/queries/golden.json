@@ -1,0 +1,223 @@
+{
+  "description": "30 representative Yaksha investigator queries with expected routing + output shape. Used by test_bilingual.py, test_e2e_query_flow.py, and any future eval harness. Mix is intentional: 15 English, 15 Kannada; ~equal split across the 6 routing intents (tabular_query, geo_query, graph_query, predictive_query, lookup, meta_query).",
+  "intent_taxonomy": [
+    "tabular_query",
+    "geo_query",
+    "graph_query",
+    "predictive_query",
+    "lookup",
+    "meta_query"
+  ],
+  "queries": [
+    {
+      "id": "Q01",
+      "lang": "en",
+      "text": "Show all chain snatching cases reported near Indiranagar metro in the last 30 days",
+      "intent": "geo_query",
+      "expects": { "viz": "map", "min_rows": 0, "language_out": "en" }
+    },
+    {
+      "id": "Q02",
+      "lang": "en",
+      "text": "How many burglaries were registered in Bengaluru Urban district in 2025?",
+      "intent": "tabular_query",
+      "expects": { "viz": "table", "language_out": "en" }
+    },
+    {
+      "id": "Q03",
+      "lang": "en",
+      "text": "List every FIR involving Manpreet Chowdary",
+      "intent": "tabular_query",
+      "expects": { "viz": "table", "language_out": "en" }
+    },
+    {
+      "id": "Q04",
+      "lang": "en",
+      "text": "Show the criminal network around accused Ahmed Naik",
+      "intent": "graph_query",
+      "expects": { "viz": "network", "language_out": "en" }
+    },
+    {
+      "id": "Q05",
+      "lang": "en",
+      "text": "Forecast vehicle theft hotspots for next week across Mysuru",
+      "intent": "predictive_query",
+      "expects": { "viz": "heatmap", "confidence_required": true, "language_out": "en" }
+    },
+    {
+      "id": "Q06",
+      "lang": "en",
+      "text": "What's the MO pattern in recent ATM fraud cases?",
+      "intent": "lookup",
+      "expects": { "viz": "text", "language_out": "en" }
+    },
+    {
+      "id": "Q07",
+      "lang": "en",
+      "text": "Why did you flag this suspect as repeat offender?",
+      "intent": "meta_query",
+      "expects": { "viz": "audit_chain", "language_out": "en" }
+    },
+    {
+      "id": "Q08",
+      "lang": "en",
+      "text": "Show cybercrime FIRs filed at Halasuru Police Station in 2022",
+      "intent": "tabular_query",
+      "expects": { "viz": "table", "language_out": "en" }
+    },
+    {
+      "id": "Q09",
+      "lang": "en",
+      "text": "Plot hotspots of two-wheeler theft within 2 km of Saraswathipuram",
+      "intent": "geo_query",
+      "expects": { "viz": "map", "language_out": "en" }
+    },
+    {
+      "id": "Q10",
+      "lang": "en",
+      "text": "Find every accused linked to FIR MGR/2025/00001 through shared addresses",
+      "intent": "graph_query",
+      "expects": { "viz": "network", "language_out": "en" }
+    },
+    {
+      "id": "Q11",
+      "lang": "en",
+      "text": "Predict next month's chain-snatching risk hotspots in Bengaluru Urban",
+      "intent": "predictive_query",
+      "expects": { "viz": "heatmap", "confidence_required": true, "language_out": "en" }
+    },
+    {
+      "id": "Q12",
+      "lang": "en",
+      "text": "What does IPC 379 cover and how is it different from IPC 380?",
+      "intent": "lookup",
+      "expects": { "viz": "text", "language_out": "en" }
+    },
+    {
+      "id": "Q13",
+      "lang": "en",
+      "text": "Why did the system route my last query to RAG instead of SQL?",
+      "intent": "meta_query",
+      "expects": { "viz": "audit_chain", "language_out": "en" }
+    },
+    {
+      "id": "Q14",
+      "lang": "en",
+      "text": "Compare burglary trends between Mysuru and Belagavi over the last 3 years",
+      "intent": "tabular_query",
+      "expects": { "viz": "chart", "language_out": "en" }
+    },
+    {
+      "id": "Q15",
+      "lang": "en",
+      "text": "Show me the relationship graph between accused in all chargesheet_filed FIRs of MG Road Police Station",
+      "intent": "graph_query",
+      "expects": { "viz": "network", "language_out": "en" }
+    },
+    {
+      "id": "Q16",
+      "lang": "kn",
+      "text": "ಬೆಂಗಳೂರಿನಲ್ಲಿ ಕಳೆದ ೩೦ ದಿನಗಳಲ್ಲಿ ನಡೆದ ಸರಗಳ್ಳತನಗಳನ್ನು ತೋರಿಸಿ",
+      "intent": "geo_query",
+      "expects": { "viz": "map", "language_out": "kn" }
+    },
+    {
+      "id": "Q17",
+      "lang": "kn",
+      "text": "ಮೈಸೂರಿನಲ್ಲಿ ೨೦೨೪ರಲ್ಲಿ ಎಷ್ಟು ವಾಹನ ಕಳ್ಳತನಗಳು ದಾಖಲಾಗಿವೆ?",
+      "intent": "tabular_query",
+      "expects": { "viz": "table", "language_out": "kn" }
+    },
+    {
+      "id": "Q18",
+      "lang": "kn",
+      "text": "ಆರೋಪಿ ಮನ್ಪ್ರೀತ್ ಚೌಧರಿ ಮೇಲೆ ಮೊದಲು ಎಷ್ಟು ಪ್ರಕರಣಗಳಿವೆ?",
+      "intent": "tabular_query",
+      "expects": { "viz": "table", "language_out": "kn" }
+    },
+    {
+      "id": "Q19",
+      "lang": "kn",
+      "text": "ಅಹ್ಮದ್ ನಾಯಕ್ ಸುತ್ತಲಿನ ಅಪರಾಧ ಜಾಲವನ್ನು ತೋರಿಸಿ",
+      "intent": "graph_query",
+      "expects": { "viz": "network", "language_out": "kn" }
+    },
+    {
+      "id": "Q20",
+      "lang": "kn",
+      "text": "ಮುಂದಿನ ವಾರ ಮೈಸೂರಿನಲ್ಲಿ ವಾಹನ ಕಳ್ಳತನದ ಹಾಟ್‌ಸ್ಪಾಟ್‌ಗಳನ್ನು ಮುನ್ಸೂಚಿಸಿ",
+      "intent": "predictive_query",
+      "expects": { "viz": "heatmap", "confidence_required": true, "language_out": "kn" }
+    },
+    {
+      "id": "Q21",
+      "lang": "kn",
+      "text": "ಇತ್ತೀಚಿನ ಎಟಿಎಂ ವಂಚನೆ ಪ್ರಕರಣಗಳ ಎಂಒ ಮಾದರಿ ಏನು?",
+      "intent": "lookup",
+      "expects": { "viz": "text", "language_out": "kn" }
+    },
+    {
+      "id": "Q22",
+      "lang": "kn",
+      "text": "ಈ ಸಂಶಯಿತನನ್ನು ಪುನರಾವರ್ತಿತ ಅಪರಾಧಿ ಎಂದು ಏಕೆ ಗುರುತಿಸಿದ್ದೀರಿ?",
+      "intent": "meta_query",
+      "expects": { "viz": "audit_chain", "language_out": "kn" }
+    },
+    {
+      "id": "Q23",
+      "lang": "kn",
+      "text": "ಹಲಸೂರು ಠಾಣೆಯಲ್ಲಿ ೨೦೨೨ರಲ್ಲಿ ದಾಖಲಾದ ಸೈಬರ್ ಅಪರಾಧಗಳನ್ನು ತೋರಿಸಿ",
+      "intent": "tabular_query",
+      "expects": { "viz": "table", "language_out": "kn" }
+    },
+    {
+      "id": "Q24",
+      "lang": "kn",
+      "text": "ಸರಸ್ವತಿಪುರಂ ಸುತ್ತ ೨ ಕಿಮೀ ವ್ಯಾಪ್ತಿಯಲ್ಲಿ ದ್ವಿಚಕ್ರ ವಾಹನ ಕಳ್ಳತನದ ಹಾಟ್‌ಸ್ಪಾಟ್‌ಗಳನ್ನು ತೋರಿಸಿ",
+      "intent": "geo_query",
+      "expects": { "viz": "map", "language_out": "kn" }
+    },
+    {
+      "id": "Q25",
+      "lang": "kn",
+      "text": "MGR/2025/00001 ಎಫ್‌ಐಆರ್‌ಗೆ ಸಂಬಂಧಿಸಿದ ಎಲ್ಲಾ ಆರೋಪಿಗಳನ್ನು ಹುಡುಕಿ",
+      "intent": "graph_query",
+      "expects": { "viz": "network", "language_out": "kn" }
+    },
+    {
+      "id": "Q26",
+      "lang": "kn",
+      "text": "ಮುಂದಿನ ತಿಂಗಳು ಬೆಂಗಳೂರಿನಲ್ಲಿ ಸರಗಳ್ಳತನದ ಅಪಾಯ ಪ್ರದೇಶಗಳನ್ನು ಮುನ್ಸೂಚಿಸಿ",
+      "intent": "predictive_query",
+      "expects": { "viz": "heatmap", "confidence_required": true, "language_out": "kn" }
+    },
+    {
+      "id": "Q27",
+      "lang": "kn",
+      "text": "ಐಪಿಸಿ ಸೆಕ್ಷನ್ ೩೭೯ ಎಂದರೇನು ಮತ್ತು ೩೮೦ಕ್ಕಿಂತ ಹೇಗೆ ಭಿನ್ನವಾಗಿದೆ?",
+      "intent": "lookup",
+      "expects": { "viz": "text", "language_out": "kn" }
+    },
+    {
+      "id": "Q28",
+      "lang": "kn",
+      "text": "ನನ್ನ ಹಿಂದಿನ ಪ್ರಶ್ನೆಯನ್ನು ಆರ್‌ಎಜಿಗೆ ಏಕೆ ಕಳುಹಿಸಿದ್ದೀರಿ?",
+      "intent": "meta_query",
+      "expects": { "viz": "audit_chain", "language_out": "kn" }
+    },
+    {
+      "id": "Q29",
+      "lang": "kn",
+      "text": "ಮೈಸೂರು ಮತ್ತು ಬೆಳಗಾವಿಯಲ್ಲಿ ಕಳೆದ ೩ ವರ್ಷಗಳಲ್ಲಿ ಕಳವು ಪ್ರವೃತ್ತಿಯನ್ನು ಹೋಲಿಸಿ",
+      "intent": "tabular_query",
+      "expects": { "viz": "chart", "language_out": "kn" }
+    },
+    {
+      "id": "Q30",
+      "lang": "kn",
+      "text": "ಎಂಜಿ ರೋಡ್ ಠಾಣೆಯಲ್ಲಿ ಚಾರ್ಜ್‌ಶೀಟ್ ಸಲ್ಲಿಸಿದ ಎಲ್ಲಾ ಎಫ್‌ಐಆರ್‌ಗಳಲ್ಲಿನ ಆರೋಪಿಗಳ ನಡುವಿನ ಸಂಬಂಧ ಗ್ರಾಫ್ ತೋರಿಸಿ",
+      "intent": "graph_query",
+      "expects": { "viz": "network", "language_out": "kn" }
+    }
+  ]
+}
