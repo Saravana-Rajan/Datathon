@@ -103,6 +103,17 @@ export function VoiceRecorder({
   const [responseText, setResponseText] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Broadcast state transitions so VoiceModeOverlay (or any other surface
+  // mounted alongside this recorder) can drive UI off the real audio state
+  // without lifting state up. Non-breaking — anything that doesn't listen
+  // just ignores the event.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(
+      new CustomEvent("ksp:voice-state", { detail: { state } }),
+    );
+  }, [state]);
+
   // Refs for state that must not trigger re-render in hot paths.
   const isStreamingToGeminiRef = useRef(false);
   const streamingPlayerRef = useRef<StreamingAudioPlayer | null>(null);

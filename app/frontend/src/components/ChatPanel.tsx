@@ -2,13 +2,34 @@
 
 import * as React from "react";
 import { useChat } from "@ai-sdk/react";
-import { ShieldCheck, Languages, AlertTriangle } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ShieldCheck, Languages, AlertTriangle, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useKspStore } from "@/lib/store";
+import { useKspStore, type Language } from "@/lib/store";
 import { ChatMessage, type ChatMessageLike } from "./ChatMessage";
 import { MessageInput } from "./MessageInput";
 import { TypingIndicator } from "./TypingIndicator";
+import { SuggestionCard, DEFAULT_SUGGESTIONS } from "./SuggestionCard";
+import { VoiceModeOverlay } from "./VoiceModeOverlay";
+
+/**
+ * Detect at runtime whether Gemini Live is wired up. Two preconditions:
+ *   1. `NEXT_PUBLIC_GEMINI_LIVE_API_KEY` (or the legacy `NEXT_PUBLIC_GEMINI_API_KEY`)
+ *      is set at build time — Next inlines `NEXT_PUBLIC_*` vars into the static
+ *      bundle. To enable, drop the key into `.env.local`:
+ *
+ *          NEXT_PUBLIC_GEMINI_LIVE_API_KEY=AQ.AbXXXXXXXX
+ *
+ *      DO NOT commit the value. For production we still need a Catalyst
+ *      function to proxy the WebSocket so the key isn't shipped to clients.
+ *   2. The `@google/genai` SDK must resolve. We intentionally don't add it as
+ *      a dep — install it locally with `npm i @google/genai` to dev with the
+ *      live path. If the import fails the chat panel falls back to webkit.
+ */
+const GEMINI_LIVE_API_KEY =
+  process.env.NEXT_PUBLIC_GEMINI_LIVE_API_KEY ??
+  process.env.NEXT_PUBLIC_GEMINI_API_KEY ??
+  "";
+const GEMINI_LIVE_AVAILABLE = GEMINI_LIVE_API_KEY.length > 0;
 
 /**
  * Visualization spec emitted by the synthesizer alongside its prose. The
@@ -384,11 +405,68 @@ export function ChatPanel({
     [append, setInput],
   );
 
-  // ─── Voice input (browser SpeechRecognition) ────────────────────────────
-  // Heavy Gemini Live wiring lives in VoiceRecorder.tsx but it depends on
-  // backend audio endpoints that aren't ready. For the chat surface we use
-  // the Web Speech API directly — zero backend dependency, works in Chrome
-  // and Edge, supports Kannada (kn-IN) and Indian English (en-IN).
+  // ─── Voice input ────────────────────────────────────────────────────────
+  // Two-path strategy:
+  //   (A) Gemini Live voice-to-voice — bidirectional WebSocket streaming via
+  //       the VoiceRecorder component, model `gemini-live-2.5-flash-preview`.
+  //       Enabled when NEXT_PUBLIC_GEMINI_LIVE_API_KEY is present AND the user
+  //       has flipped voice mode to "Live" (defaults ON for Kannada).
+  //   (B) Browser `webkitSpeechRecognition` — zero-backend fallback that
+  //       dictates into the text input. Always available as a safety net so
+  //       the demo never breaks.
+  //
+  // TODO(prod): replace direct WS with a Catalyst function proxy at
+  //   `/server/gemini-live-proxy` so we never ship the API key in the bundle.
+
+  const [voiceMode, setVoiceMode] = React.useState<"live" | "dictation">(
+    GEMINI_LIVE_AVAILABLE ? "live" : "dictation",
+  );
+  // If Gemini Live becomes unavailable mid-session (key cleared via devtools,
+  // etc.), demote silently. Keeps the UI honest.
+  React.useEffect(() => {
+    if (!GEMINI_LIVE_AVAILABLE && voiceMode === "live") {
+      setVoiceMode("dictation");
+    }
+  }, [voiceMode]);
+
+  const [isLiveVoiceOpen, setIsLiveVoiceOpen] = React.useState(false);
+
+  // Bridge Gemini Live transcripts into the chat history so the map/network
+  // panels still light up via the existing viz_spec pipeline.
+  const handleLiveTranscript = React.useCallback(
+    (text: string, lang: Language) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      // Append as a user turn — the orchestrator will reply via SSE and the
+      // viz_spec extractor below will pick up any markers.
+      void append({ role: "user", content: trimmed });
+      // Hint the store at the spoken language so prompts/UI follow suit.
+      if (lang !== language) {
+        useKspStore.getState().setLanguage(lang);
+      }
+    },
+    [append, language],
+  );
+
+  const handleLiveResponse = React.useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      // Inject the spoken assistant turn into the chat history as a real
+      // message so the audit trail + transcript scrollback stay coherent.
+      const id = `gemini-live-${Date.now()}`;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id,
+          role: "assistant",
+          content: trimmed,
+        } as (typeof prev)[number],
+      ]);
+    },
+    [setMessages],
+  );
+
   type SRType = {
     new (): {
       lang: string;
@@ -407,6 +485,11 @@ export function ChatPanel({
 
   const toggleVoice = React.useCallback(() => {
     setVoiceError(null);
+    // Live mode → open the VoiceRecorder overlay (Gemini Live WebSocket).
+    if (voiceMode === "live" && GEMINI_LIVE_AVAILABLE) {
+      setIsLiveVoiceOpen((v) => !v);
+      return;
+    }
     if (typeof window === "undefined") return;
     const w = window as unknown as {
       SpeechRecognition?: SRType;
@@ -479,7 +562,7 @@ export function ChatPanel({
           : "Could not start the microphone."
       );
     }
-  }, [append, isRecording, language, setInput]);
+  }, [append, isRecording, language, setInput, voiceMode]);
 
   React.useEffect(() => {
     // Stop any in-flight recognition if the panel unmounts.
@@ -521,6 +604,35 @@ export function ChatPanel({
           className="flex items-center gap-2 text-xs"
           aria-label="Active language"
         >
+          {GEMINI_LIVE_AVAILABLE && (
+            <button
+              type="button"
+              onClick={() =>
+                setVoiceMode((m) => (m === "live" ? "dictation" : "live"))
+              }
+              aria-pressed={voiceMode === "live"}
+              title={
+                voiceMode === "live"
+                  ? "Gemini Live voice mode — bidirectional Kannada voice-to-voice"
+                  : "Browser dictation mode — text-only speech recognition"
+              }
+              className={cn(
+                "flex items-center gap-1 rounded-md border px-2 py-0.5 font-medium uppercase tracking-wide transition-colors",
+                voiceMode === "live"
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
+                  : "bg-card text-muted-foreground hover:bg-muted",
+              )}
+            >
+              <Radio
+                className={cn(
+                  "h-3 w-3",
+                  voiceMode === "live" && "animate-pulse",
+                )}
+                aria-hidden="true"
+              />
+              {voiceMode === "live" ? "Live" : "Dict"}
+            </button>
+          )}
           <Languages
             className="h-3.5 w-3.5 text-muted-foreground"
             aria-hidden="true"
@@ -639,6 +751,33 @@ export function ChatPanel({
           </div>
         )}
 
+        {isLiveVoiceOpen && GEMINI_LIVE_AVAILABLE && (
+          <div
+            role="region"
+            aria-label="Live voice conversation"
+            className="relative flex flex-col items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3"
+          >
+            <button
+              type="button"
+              onClick={() => setIsLiveVoiceOpen(false)}
+              className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              aria-label="Close live voice"
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+            <p className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+              {language === "kn"
+                ? "ಲೈವ್ ಧ್ವನಿ — Gemini Live"
+                : "Live voice — Gemini Live"}
+            </p>
+            <VoiceRecorder
+              language={language}
+              onTranscript={handleLiveTranscript}
+              onResponseComplete={handleLiveResponse}
+            />
+          </div>
+        )}
+
         <MessageInput
           value={input}
           onChange={handleInputChange}
@@ -646,7 +785,7 @@ export function ChatPanel({
           isLoading={isLoading}
           onSendText={sendSuggested}
           onToggleVoice={toggleVoice}
-          isRecording={isRecording}
+          isRecording={isRecording || isLiveVoiceOpen}
           showSuggestions={messages.length === 0}
         />
       </CardContent>

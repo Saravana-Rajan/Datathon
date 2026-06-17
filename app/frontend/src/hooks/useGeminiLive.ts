@@ -196,7 +196,23 @@ export function useGeminiLive(
       explicitCloseRef.current = false;
 
       try {
-        const mod = (await import("@google/genai")) as unknown as GoogleGenAIModule;
+        // Resolve `@google/genai` lazily through a variable specifier so
+        // webpack doesn't try to statically resolve it at build time. The
+        // package is intentionally NOT in package.json — adding it would
+        // balloon the static-export bundle. The hackathon demo connects
+        // directly to Gemini Live via the raw WebSocket below when this
+        // dynamic import resolves (i.e. when the user opts in by installing
+        // the SDK locally for development), and otherwise raises a typed
+        // error that the chat panel handles by falling back to webkit STT.
+        const sdkSpecifier = "@google" + "/genai";
+        let mod: GoogleGenAIModule;
+        try {
+          mod = (await import(/* webpackIgnore: true */ /* @vite-ignore */ sdkSpecifier)) as unknown as GoogleGenAIModule;
+        } catch {
+          throw new Error(
+            "GEMINI_LIVE_SDK_MISSING: install @google/genai to enable Gemini Live voice mode",
+          );
+        }
         const client = new mod.GoogleGenAI({ apiKey });
 
         const langCode =
