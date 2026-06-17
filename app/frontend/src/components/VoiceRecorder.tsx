@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * VoiceRecorder — the user-facing mic affordance for KSP Saathi.
+ * VoiceRecorder — the user-facing mic affordance for Sarvik.
  *
  * State machine:
  *
@@ -15,7 +15,7 @@
  *     processing (English) ──Zia TTS WAV──> speaking
  *     speaking ──TTS ends OR user speaks (barge-in)──> listening
  *
- * Visual language matches the rest of the KSP Saathi shell — Tailwind
+ * Visual language matches the rest of the Sarvik shell — Tailwind
  * primitives + Lucide icons, no extra UI deps. Designed mobile-first.
  *
  * Accessibility:

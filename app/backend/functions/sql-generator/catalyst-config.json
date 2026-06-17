@@ -1,8 +1,8 @@
 {
   "deployment": {
     "name": "sql-generator",
-    "type": "advancedio",
-    "stack": "python_3_9",
+    "type": "basicio",
+    "stack": "python_3_11",
     "memory": 512,
     "timeout": 30
   },

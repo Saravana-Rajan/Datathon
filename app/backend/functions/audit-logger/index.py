@@ -66,7 +66,9 @@ Step-type taxonomy (locked):
     user_flag        — officer marked the answer wrong (mirrors /flag)
 """
 
-from __future__ import annotations
+# NOTE: do NOT use `from __future__ import annotations` here. Pydantic v2
+# evaluates annotations at class-creation time and fails to resolve
+# `Dict`/`Optional` from deferred string annotations on Catalyst's runtime.
 
 import json
 import logging
@@ -76,7 +78,7 @@ import time
 import traceback
 import uuid
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger("ksp_saathi.audit_logger")
 logger.setLevel(logging.INFO)
@@ -130,10 +132,10 @@ try:
     class AppendStepModel(BaseModel):
         request_id: str = Field(min_length=1, max_length=128)
         step_type: str
-        step_data: dict[str, Any] = Field(default_factory=dict)
-        ts: str | None = None
-        user_id: str | None = None
-        role: str | None = None
+        step_data: Dict[str, Any] = Field(default_factory=dict)
+        ts: Optional[str] = None
+        user_id: Optional[str] = None
+        role: Optional[str] = None
 
         @field_validator("step_type")
         @classmethod

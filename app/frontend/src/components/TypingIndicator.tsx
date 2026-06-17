@@ -20,7 +20,7 @@ export interface TypingIndicatorProps {
 }
 
 export function TypingIndicator({
-  label = "Saathi is thinking",
+  label = "Sarvik is thinking",
   className,
 }: TypingIndicatorProps): JSX.Element {
   return (

@@ -206,7 +206,7 @@ function GoogleMark({ className }: { className?: string }) {
 function LoginPageInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params?.get("next") || "/";
+  const next = params?.get("next") || "/dashboard";
 
   const { user, loading, signIn, signInWithGoogle } = useAuth();
 
@@ -277,9 +277,14 @@ function LoginPageInner() {
 
       {/* Top bar */}
       <header className="relative z-10 flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#d4a857]/80">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#d4a857]" />
-          {t.eyebrow}
+        <div className="flex flex-col gap-1">
+          <div className="text-[11px] font-medium text-[#d4a857]">
+            ನಮಸ್ಕಾರ, ಇನ್ಸ್‌ಪೆಕ್ಟರ್
+          </div>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#d4a857]/80">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#d4a857]" />
+            {t.eyebrow}
+          </div>
         </div>
 
         <div
@@ -519,6 +524,43 @@ function LoginPageInner() {
               <p className="text-[11px] leading-relaxed text-slate-500">
                 {t.demoHint}
               </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    const now = new Date();
+                    const expires = new Date(
+                      now.getTime() + 1000 * 60 * 60 * 4
+                    ).toISOString();
+                    const guestSession = {
+                      user: {
+                        id: "guest-demo",
+                        email: "guest@sarvik.local",
+                        name: "Guest Reviewer",
+                        role: "guest",
+                        lastLoginAt: now.toISOString(),
+                      },
+                      jwt: "guest.guest.guest",
+                      expiresAt: expires,
+                    };
+                    localStorage.setItem(
+                      "sarvik-auth-session",
+                      JSON.stringify(guestSession)
+                    );
+                    localStorage.setItem("sarvik-guest-session", "true");
+                    window.dispatchEvent(new Event("sarvik-auth-change"));
+                  } catch {
+                    // ignore — fall through to normal redirect
+                  }
+                  router.replace("/dashboard");
+                }}
+                className="block w-full rounded-md border border-dashed border-slate-300 px-3 py-2 text-center text-xs font-medium text-[#1e3a8a] hover:bg-slate-50"
+              >
+                {language === "kn"
+                  ? "ಅತಿಥಿಯಾಗಿ ಡೆಮೋ ನೋಡಿ →"
+                  : "Try demo as guest →"}
+              </button>
             </CardContent>
 
             <CardFooter className="flex flex-col items-start gap-1.5 border-t pt-4 text-[11px] text-slate-500">

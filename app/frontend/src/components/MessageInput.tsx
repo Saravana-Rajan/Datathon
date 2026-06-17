@@ -10,7 +10,7 @@ import { useKspStore, type Language } from "@/lib/store";
 /**
  * Suggested-question chips. Three per language seed the conversation for
  * first-time users so judges and field officers immediately see what KSP
- * Saathi can do. The Kannada chips intentionally exercise transliteration
+ * Sarvik can do. The Kannada chips intentionally exercise transliteration
  * (named entity) + temporal reasoning + map-grounded queries.
  */
 const SUGGESTIONS: Record<Language, string[]> = {
@@ -131,7 +131,7 @@ export function MessageInput({
         aria-label="Send a message"
       >
         <label htmlFor="ksp-chat-input" className="sr-only">
-          Message Saathi
+          Message Sarvik
         </label>
         <Input
           ref={inputRef}

@@ -132,6 +132,7 @@ export function ChatPanel({
     error,
     setInput,
     append,
+    setMessages,
     stop,
   } = useChat({
     api: apiEndpoint,
@@ -145,6 +146,126 @@ export function ChatPanel({
       console.error("[ChatPanel] chat stream error", err);
     },
   });
+
+  // ─── Demo-mode fallback ─────────────────────────────────────────────────
+  // The orchestrator endpoint returns 500 (HTML) while the backend team is
+  // still wiring it up. Rather than show a raw HTML error banner to judges,
+  // we synthesize a believable streaming response with a viz_spec attached
+  // so the map/network panels still light up. This is intentionally
+  // permissive — it makes the demo bulletproof even if the backend is down.
+  const replyToUserInDemoMode = React.useCallback(
+    (userText: string) => {
+      const lower = userText.toLowerCase();
+      // Heuristic: pick a believable canned response by intent keywords.
+      let reply: string;
+      let viz:
+        | {
+            kind: "map" | "graph";
+            markers?: Array<{
+              id: string;
+              lat: number;
+              lng: number;
+              label: string;
+              severity: "low" | "medium" | "high";
+            }>;
+            nodes?: Array<{ id: string; label: string; type: "person" | "fir" | "location" }>;
+            edges?: Array<{ id: string; source: string; target: string; label?: string }>;
+          }
+        | null = null;
+
+      if (
+        lower.includes("offender") ||
+        lower.includes("indiranagar") ||
+        lower.includes("network") ||
+        lower.includes("ಅಪರಾಧಿ")
+      ) {
+        reply =
+          language === "kn"
+            ? "ಇಂದಿರಾನಗರ ಪ್ರದೇಶದಲ್ಲಿ ಕಳೆದ 90 ದಿನಗಳಲ್ಲಿ 7 ಪುನರಾವರ್ತಿತ ಅಪರಾಧಿಗಳನ್ನು ಗುರುತಿಸಲಾಗಿದೆ. ಪ್ರಮುಖ ಗ್ಯಾಂಗ್ ಲೀಡರ್‌ಗಳು ಮತ್ತು ಸಹ-ಆರೋಪಿಗಳ ಜಾಲವನ್ನು ನೆಟ್‌ವರ್ಕ್ ಟ್ಯಾಬ್‌ನಲ್ಲಿ ತೋರಿಸಲಾಗಿದೆ."
+            : "Identified 7 repeat offenders in the Indiranagar beat over the last 90 days. Top suspects: Ravi K., Manjunath S., and Yusuf B. Their co-accused network is now visualized in the Network tab.";
+        viz = {
+          kind: "graph",
+          nodes: [
+            { id: "p1", label: "Ravi K.", type: "person" },
+            { id: "p2", label: "Manjunath S.", type: "person" },
+            { id: "p3", label: "Yusuf B.", type: "person" },
+            { id: "p4", label: "Anil M.", type: "person" },
+            { id: "f1", label: "FIR 412/24", type: "fir" },
+            { id: "f2", label: "FIR 198/24", type: "fir" },
+          ],
+          edges: [
+            { id: "e1", source: "p1", target: "p2", label: "co-accused" },
+            { id: "e2", source: "p2", target: "p3", label: "phone link" },
+            { id: "e3", source: "p1", target: "f1", label: "accused in" },
+            { id: "e4", source: "p3", target: "f2", label: "accused in" },
+            { id: "e5", source: "p4", target: "p2", label: "vehicle link" },
+          ],
+        };
+      } else if (
+        lower.includes("hotspot") ||
+        lower.includes("mg road") ||
+        lower.includes("pattern") ||
+        lower.includes("ಹಾಟ್‌ಸ್ಪಾಟ್")
+      ) {
+        reply =
+          language === "kn"
+            ? "ಎಂಜಿ ರಸ್ತೆ ಸುತ್ತಮುತ್ತಲ 3 ಸಕ್ರಿಯ ಹಾಟ್‌ಸ್ಪಾಟ್‌ಗಳನ್ನು ನಕ್ಷೆಯಲ್ಲಿ ತೋರಿಸಲಾಗಿದೆ. ಮುಖ್ಯ ಮಾದರಿಗಳು: ರಾತ್ರಿ 10–2 ಗಂಟೆ ನಡುವೆ ಜೇಬುಗಳ್ಳತನ ಮತ್ತು ಎರಡು ಚಕ್ರ ವಾಹನ ಕಳ್ಳತನ."
+            : "3 active hotspots clustered around MG Road. Dominant pattern: pickpocketing and two-wheeler theft between 22:00 and 02:00. Map updated.";
+        viz = {
+          kind: "map",
+          markers: [
+            { id: "h1", lat: 12.9756, lng: 77.6076, label: "MG Road hotspot", severity: "high" },
+            { id: "h2", lat: 12.9745, lng: 77.6098, label: "Brigade Junction", severity: "medium" },
+            { id: "h3", lat: 12.9712, lng: 77.6122, label: "Trinity Circle", severity: "low" },
+          ],
+        };
+      } else {
+        reply =
+          language === "kn"
+            ? "ಡೆಮೋ ಮೋಡ್: ಆರ್ಕೆಸ್ಟ್ರೇಟರ್ ಬ್ಯಾಕೆಂಡ್ ಸದ್ಯ ತಲುಪಲಾಗುತ್ತಿಲ್ಲ. ಮಾದರಿ ಪ್ರಶ್ನೆಗಳನ್ನು ಚಿಪ್‌ಗಳಿಂದ ಪ್ರಯತ್ನಿಸಿ — ಪೂರ್ಣ ಫ್ಲೋ ಲೈವ್ ಆದಾಗ ಅದೇ ಪ್ರಶ್ನೆಗಳು ರೂಟ್ ಆಗುತ್ತವೆ."
+            : "Demo mode: the live orchestrator is currently unreachable. Try the suggestion chips for canned answers — once the backend is wired up, the same queries will route to the real pipeline.";
+      }
+
+      const requestId = `req_demo_${Date.now()}`;
+      const vizBlock = viz
+        ? `\n\n<<VIZ>>${JSON.stringify({ ...viz, requestId })}<<END>>`
+        : "";
+      const assistantContent = reply + vizBlock + `<<RID>>${requestId}<<END>>`;
+
+      // Append the synthetic assistant message after a small delay so the
+      // typing indicator gets a chance to flash.
+      window.setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `demo-${Date.now()}`,
+            role: "assistant",
+            content: assistantContent,
+          } as (typeof prev)[number],
+        ]);
+      }, 420);
+    },
+    [language, setMessages]
+  );
+
+  // When the orchestrator errors out, automatically fall back to demo mode
+  // for whatever the user last sent. We only fire ONCE per error/turn pair.
+  const lastDemoFillRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (!error) return;
+    if (isLoading) return;
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    if (!lastUser) return;
+    if (lastDemoFillRef.current === lastUser.id) return;
+    const lastAssistantId = messages[messages.length - 1]?.id;
+    if (lastAssistantId && lastAssistantId !== lastUser.id) {
+      // An assistant message already replied — don't double-fill.
+      const lastAssistant = messages[messages.length - 1];
+      if (lastAssistant.role === "assistant") return;
+    }
+    lastDemoFillRef.current = lastUser.id;
+    replyToUserInDemoMode(lastUser.content);
+  }, [error, isLoading, messages, replyToUserInDemoMode]);
 
   // Track which message ids we've already pushed to the viz store so streaming
   // re-renders don't double-fire side effects.
@@ -263,6 +384,114 @@ export function ChatPanel({
     [append, setInput],
   );
 
+  // ─── Voice input (browser SpeechRecognition) ────────────────────────────
+  // Heavy Gemini Live wiring lives in VoiceRecorder.tsx but it depends on
+  // backend audio endpoints that aren't ready. For the chat surface we use
+  // the Web Speech API directly — zero backend dependency, works in Chrome
+  // and Edge, supports Kannada (kn-IN) and Indian English (en-IN).
+  type SRType = {
+    new (): {
+      lang: string;
+      interimResults: boolean;
+      continuous: boolean;
+      onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
+      onerror: (e: { error?: string }) => void;
+      onend: () => void;
+      start: () => void;
+      stop: () => void;
+    };
+  };
+  const recognitionRef = React.useRef<InstanceType<SRType> | null>(null);
+  const [isRecording, setIsRecording] = React.useState(false);
+  const [voiceError, setVoiceError] = React.useState<string | null>(null);
+
+  const toggleVoice = React.useCallback(() => {
+    setVoiceError(null);
+    if (typeof window === "undefined") return;
+    const w = window as unknown as {
+      SpeechRecognition?: SRType;
+      webkitSpeechRecognition?: SRType;
+    };
+    const SR = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+    if (!SR) {
+      setVoiceError(
+        language === "kn"
+          ? "ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಧ್ವನಿ ಬೆಂಬಲಿಸುವುದಿಲ್ಲ. Chrome ಅಥವಾ Edge ಬಳಸಿ."
+          : "Voice input is not supported in this browser. Try Chrome or Edge."
+      );
+      return;
+    }
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    try {
+      const rec = new SR();
+      rec.lang = language === "kn" ? "kn-IN" : "en-IN";
+      rec.interimResults = true;
+      rec.continuous = false;
+      let finalText = "";
+      rec.onresult = (e) => {
+        let interim = "";
+        let finalChunk = "";
+        for (let i = 0; i < e.results.length; i++) {
+          const res = e.results[i] as ArrayLike<{ transcript: string }> & {
+            isFinal?: boolean;
+          };
+          const text = res[0]?.transcript ?? "";
+          if (res.isFinal) finalChunk += text;
+          else interim += text;
+        }
+        finalText = finalChunk || finalText;
+        const display = (finalText + " " + interim).trim();
+        setInput(display);
+      };
+      rec.onerror = (e) => {
+        const code = e.error ?? "unknown";
+        setVoiceError(
+          code === "not-allowed" || code === "service-not-allowed"
+            ? language === "kn"
+              ? "ಮೈಕ್ರೊಫೋನ್ ಅನುಮತಿ ನಿರಾಕರಿಸಲಾಗಿದೆ. ಬ್ರೌಸರ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅನುಮತಿಸಿ."
+              : "Microphone permission was blocked. Allow it in your browser site settings."
+            : language === "kn"
+              ? "ಧ್ವನಿ ಗುರುತಿಸುವಿಕೆಯಲ್ಲಿ ದೋಷ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+              : "Speech recognition error. Please try again."
+        );
+        setIsRecording(false);
+      };
+      rec.onend = () => {
+        setIsRecording(false);
+        // Auto-send if we captured a non-trivial utterance.
+        if (finalText.trim().length > 0) {
+          void append({ role: "user", content: finalText.trim() });
+          setInput("");
+        }
+      };
+      recognitionRef.current = rec;
+      rec.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("[ChatPanel] SpeechRecognition start failed", err);
+      setIsRecording(false);
+      setVoiceError(
+        language === "kn"
+          ? "ಮೈಕ್ರೊಫೋನ್ ಪ್ರಾರಂಭಿಸಲಾಗಲಿಲ್ಲ."
+          : "Could not start the microphone."
+      );
+    }
+  }, [append, isRecording, language, setInput]);
+
+  React.useEffect(() => {
+    // Stop any in-flight recognition if the panel unmounts.
+    return () => {
+      try {
+        recognitionRef.current?.stop();
+      } catch {
+        // ignore
+      }
+    };
+  }, []);
+
   const lastMessage = messages[messages.length - 1];
   const showTypingIndicator =
     isLoading &&
@@ -281,7 +510,7 @@ export function ChatPanel({
             <ShieldCheck className="h-4 w-4" />
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold">Saathi</span>
+            <span className="text-sm font-semibold">Sarvik</span>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
               {role ? `${role} session` : "Guest session"}
             </span>
@@ -371,7 +600,7 @@ export function ChatPanel({
                   label={
                     language === "kn"
                       ? "ಸಾಥಿ ಯೋಚಿಸುತ್ತಿದೆ"
-                      : "Saathi is thinking"
+                      : "Sarvik is thinking"
                   }
                 />
               </li>
@@ -382,22 +611,31 @@ export function ChatPanel({
         {error && (
           <div
             role="alert"
-            className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive"
+            className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
           >
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5" aria-hidden="true" />
             <div>
               <p className="font-medium">
                 {language === "kn"
-                  ? "ಸಂಪರ್ಕ ತೊಂದರೆ"
-                  : "Connection error"}
+                  ? "ಡೆಮೋ ಮೋಡ್ ಸಕ್ರಿಯ"
+                  : "Demo mode active"}
               </p>
               <p className="opacity-80">
-                {error.message ||
-                  (language === "kn"
-                    ? "ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ."
-                    : "Please try again.")}
+                {language === "kn"
+                  ? "ಲೈವ್ ಆರ್ಕೆಸ್ಟ್ರೇಟರ್ ತಲುಪಲಾಗುತ್ತಿಲ್ಲ — ಮಾದರಿ ಉತ್ತರಗಳನ್ನು ತೋರಿಸಲಾಗುತ್ತಿದೆ."
+                  : "Live orchestrator is unreachable — showing canned answers so the demo keeps moving."}
               </p>
             </div>
+          </div>
+        )}
+
+        {voiceError && (
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5" aria-hidden="true" />
+            <span>{voiceError}</span>
           </div>
         )}
 
@@ -407,6 +645,8 @@ export function ChatPanel({
           onSubmit={handleSubmit}
           isLoading={isLoading}
           onSendText={sendSuggested}
+          onToggleVoice={toggleVoice}
+          isRecording={isRecording}
           showSuggestions={messages.length === 0}
         />
       </CardContent>

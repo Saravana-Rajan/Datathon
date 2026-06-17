@@ -182,7 +182,7 @@ export function AuditDrawerTrigger({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className,
       )}
-      aria-label="Why did Saathi say that? Open audit trail"
+      aria-label="Why did Sarvik say that? Open audit trail"
     >
       <HelpCircle className="h-3 w-3" aria-hidden="true" />
       {label}
@@ -428,7 +428,7 @@ export function AuditDrawer({
                 id="audit-drawer-title"
                 className="text-base font-semibold leading-none"
               >
-                Why did Saathi say that?
+                Why did Sarvik say that?
               </h2>
             </div>
             <p className="text-[12px] text-muted-foreground">

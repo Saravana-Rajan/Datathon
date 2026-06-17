@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * MapPanel — KSP Saathi's Google Maps surface.
+ * MapPanel — Sarvik's Google Maps surface.
  *
  * Responsibilities:
  *   • Render incidents, hotspot clusters, police stations on Google Maps.

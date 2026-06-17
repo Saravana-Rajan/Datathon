@@ -8,10 +8,15 @@ Keep this file dependency-free apart from `pydantic` + stdlib — it is
 imported by every function bundle.
 """
 
-from __future__ import annotations
+# NOTE: do NOT use `from __future__ import annotations` here. Pydantic v2
+# evaluates annotations at class-creation time. With deferred annotations,
+# resolving `Dict`/`List`/`Optional` requires the module namespace, and on
+# Catalyst's deployed runtime that resolution fails with PydanticUserError
+# ("you should define `Dict`, then call `model_rebuild()`"). Eager eval is
+# safe — we're on Python 3.11.
 
 from enum import Enum
-from typing import Any, Literal
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -50,7 +55,7 @@ class RouterDecision(BaseModel):
 
     intent: Intent
     language: Language = "en"
-    entities: dict[str, Any] = Field(
+    entities: Dict[str, Any] = Field(
         default_factory=dict,
         description="Extracted slots: station, district, date_range, accused_name, ipc_section, etc.",
     )
@@ -59,7 +64,7 @@ class RouterDecision(BaseModel):
         default="",
         description="One-paragraph human-readable trace for the audit drawer.",
     )
-    sub_intents: list[Intent] = Field(
+    sub_intents: List[Intent] = Field(
         default_factory=list,
         description="When intent == MIXED, the list of specialist tools to fan out.",
     )
@@ -81,19 +86,19 @@ class ToolResult(BaseModel):
         default=None,
         description="Rows / nodes / chunks / forecast — shape depends on tool.",
     )
-    error: str | None = Field(
+    error: Optional[str] = Field(
         default=None,
         description="Human-readable failure message, populated only when success=False.",
     )
-    latency_ms: int | None = Field(
+    latency_ms: Optional[int] = Field(
         default=None,
         description="Wall-clock latency for the specialist call.",
     )
-    raw_query: str | None = Field(
+    raw_query: Optional[str] = Field(
         default=None,
         description="The generated SQL / Cypher / search string — kept for the audit trail.",
     )
-    source_count: int | None = Field(
+    source_count: Optional[int] = Field(
         default=None,
         description="Number of underlying records the result is grounded in.",
     )
@@ -108,12 +113,12 @@ class SynthesizerInput(BaseModel):
 
     query: str
     lang: Language = "en"
-    tool_results: list[ToolResult] = Field(default_factory=list)
-    role: str | None = Field(
+    tool_results: List[ToolResult] = Field(default_factory=list)
+    role: Optional[str] = Field(
         default=None,
         description="RBAC role of the asking officer — affects PII masking.",
     )
-    session_context: list[dict[str, Any]] = Field(
+    session_context: List[Dict[str, Any]] = Field(
         default_factory=list,
         description="Recent turns from the same session for context-aware replies.",
     )
@@ -123,7 +128,7 @@ class VizSpec(BaseModel):
     """Optional visualization payload the frontend renders alongside the answer."""
 
     kind: Literal["none", "map", "graph", "chart", "table"] = "none"
-    payload: dict[str, Any] = Field(default_factory=dict)
+    payload: Dict[str, Any] = Field(default_factory=dict)
 
 
 class AuditStep(BaseModel):
@@ -131,8 +136,8 @@ class AuditStep(BaseModel):
 
     step: str = Field(description="Stage name, e.g. 'router', 'sql_generator', 'synthesizer'.")
     detail: str = Field(description="Short human-readable description.")
-    payload: dict[str, Any] = Field(default_factory=dict)
-    latency_ms: int | None = None
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    latency_ms: Optional[int] = None
 
 
 class SynthesizerOutput(BaseModel):
@@ -140,8 +145,8 @@ class SynthesizerOutput(BaseModel):
 
     answer_text: str
     viz_spec: VizSpec = Field(default_factory=VizSpec)
-    audit_chain: list[AuditStep] = Field(default_factory=list)
-    sources: list[dict[str, Any]] = Field(
+    audit_chain: List[AuditStep] = Field(default_factory=list)
+    sources: List[Dict[str, Any]] = Field(
         default_factory=list,
         description="Cited records (FIR nos, narrative chunk IDs, graph nodes).",
     )

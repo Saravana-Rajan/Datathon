@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Catalyst Zia STT/TTS bridge — English + Hindi voice path for KSP Saathi.
+ * Catalyst Zia STT/TTS bridge — English + Hindi voice path for Sarvik.
  *
  * Zia Services are accessed via two Catalyst Functions deployed in
  * `app/backend/functions/`:

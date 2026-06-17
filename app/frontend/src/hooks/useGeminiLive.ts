@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Gemini Live API client — primary Kannada voice path for KSP Saathi.
+ * Gemini Live API client — primary Kannada voice path for Sarvik.
  *
  * Gemini Live is a bidirectional WebSocket that accepts streaming PCM16 audio
  * frames and emits interleaved text + audio chunks back. We talk to it via

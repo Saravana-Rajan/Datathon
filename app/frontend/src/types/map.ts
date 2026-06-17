@@ -1,5 +1,5 @@
 /**
- * Map domain types for KSP Saathi.
+ * Map domain types for Sarvik.
  *
  * These types describe the markers, hotspots, and stations that the MapPanel
  * renders on top of Google Maps. They are produced by the backend (Catalyst

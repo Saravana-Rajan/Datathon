@@ -1,5 +1,5 @@
 /**
- * Audit-chain domain types for KSP Saathi's "Why did you say that?" feature.
+ * Audit-chain domain types for Sarvik's "Why did you say that?" feature.
  *
  * These types describe the FULL reasoning chain the backend writes to
  * Catalyst NoSQL for every chat turn (see design.md §5.8). They are

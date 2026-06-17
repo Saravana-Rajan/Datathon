@@ -1,0 +1,19 @@
+{
+  "name": "yaksha-frontend",
+  "version": "0.1.0",
+  "description": "Sarvik / Yaksha — Karnataka Police Investigator AI frontend (Next.js static export)",
+  "homepage": "index.html",
+  "main": "index.html",
+  "index_page": "index.html",
+  "error_page": "404.html",
+  "redirects": [
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/login/", "destination": "/login.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/dashboard/", "destination": "/dashboard.html" },
+    { "source": "/settings", "destination": "/settings.html" },
+    { "source": "/settings/", "destination": "/settings.html" },
+    { "source": "/demo/role-switch", "destination": "/demo/role-switch.html" },
+    { "source": "/demo/role-switch/", "destination": "/demo/role-switch.html" }
+  ]
+}

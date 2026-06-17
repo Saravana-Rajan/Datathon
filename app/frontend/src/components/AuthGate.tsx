@@ -27,10 +27,16 @@ interface AuthGateProps {
   /**
    * Where to redirect unauthenticated users. Defaults to /login with a
    * `next` query param so we can bounce them back after sign-in.
+   * Next.js automatically prefixes the configured basePath (`/app`).
    */
   redirectTo?: string;
   /** Override the default Loading fallback. */
   fallback?: React.ReactNode;
+  /**
+   * Aliased prop kept for callers that prefer the more idiomatic name.
+   * If both are supplied, `requiredRoles` wins.
+   */
+  requiredRoles?: Role[];
 }
 
 /**
@@ -54,12 +60,14 @@ interface AuthGateProps {
 export function AuthGate({
   children,
   requireRoles,
+  requiredRoles,
   redirectTo = "/login",
   fallback,
 }: AuthGateProps): React.ReactElement | null {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const effectiveRoles = requiredRoles ?? requireRoles;
 
   const setRole = useKspStore((s) => s.setRole);
   const setSession = useKspStore((s) => s.setSession);
@@ -110,7 +118,7 @@ export function AuthGate({
     return null;
   }
 
-  if (requireRoles && requireRoles.length > 0 && !requireRoles.includes(user.role)) {
+  if (effectiveRoles && effectiveRoles.length > 0 && !effectiveRoles.includes(user.role)) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-4">
         <Card className="w-full max-w-md border-destructive/30">
@@ -134,7 +142,7 @@ export function AuthGate({
               <dd className="font-mono text-xs uppercase">{user.role}</dd>
               <dt className="text-muted-foreground">Required role</dt>
               <dd className="font-mono text-xs uppercase">
-                {requireRoles.join(" / ")}
+                {(effectiveRoles ?? []).join(" / ")}
               </dd>
             </dl>
             <p className="text-xs text-muted-foreground">
@@ -148,12 +156,17 @@ export function AuthGate({
                 className="flex-1"
                 onClick={() => router.push("/")}
               >
-                Back to dashboard
+                Back to home
               </Button>
               <Button
                 variant="destructive"
                 className="flex-1"
                 onClick={async () => {
+                  try {
+                    localStorage.removeItem("sarvik-guest-session");
+                  } catch {
+                    // ignore
+                  }
                   await signOut();
                   router.replace("/login");
                 }}

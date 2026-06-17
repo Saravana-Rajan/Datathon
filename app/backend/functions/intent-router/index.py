@@ -31,7 +31,9 @@ Design references:
     design.md Section 10 (LLM strategy & tool taxonomy)
 """
 
-from __future__ import annotations
+# NOTE: do NOT use `from __future__ import annotations` here. Pydantic v2
+# evaluates annotations at class-creation time and fails to resolve
+# `Dict`/`Optional` from deferred string annotations on Catalyst's runtime.
 
 import json
 import logging
@@ -41,7 +43,7 @@ import sys
 import time
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 from flask import Flask, jsonify, request
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -129,7 +131,7 @@ class RouterLLMOutput(BaseModel):
     """Schema the LLM must conform to. Anything else gets rejected."""
 
     intent: str
-    entities: dict[str, Any] = Field(default_factory=dict)
+    entities: Dict[str, Any] = Field(default_factory=dict)
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str = Field(default="", max_length=500)
 
@@ -151,7 +153,7 @@ class RouterResponse(BaseModel):
 
     intent: str
     language: str
-    entities: dict[str, Any]
+    entities: Dict[str, Any]
     confidence: float
     reasoning: str
     router_latency_ms: int
@@ -424,9 +426,64 @@ def health():
 # ---------------------------------------------------------------------------
 # Catalyst handler entry point
 # ---------------------------------------------------------------------------
-# Catalyst Advanced I/O Functions accept a WSGI callable as the handler.
-# The platform invokes `app(environ, start_response)` directly.
-handler = app
+# Catalyst Advanced I/O Functions invoke `handler(request)` with a Flask-like
+# request object. We adapt that into a Flask test-client call so the existing
+# routes (@app.route("/"), @app.route("/health")) keep working.
+
+def handler(request_obj):
+    """Catalyst Advanced I/O entry: handler(request).
+
+    Bridges a Catalyst-style request into Flask's WSGI test client so the
+    decorated routes above (`/`, `/route`, `/health`) keep working.
+    """
+    try:
+        method = (
+            getattr(request_obj, "method", None)
+            or getattr(request_obj, "http_method", None)
+            or "POST"
+        ).upper()
+        path = (
+            getattr(request_obj, "path", None)
+            or getattr(request_obj, "url_path", None)
+            or "/"
+        ) or "/"
+        # Body extraction
+        body_bytes = b""
+        get_json = getattr(request_obj, "get_json", None)
+        body = None
+        if callable(get_json):
+            try:
+                body = get_json()
+            except Exception:  # noqa: BLE001
+                body = None
+        if body is None:
+            raw = getattr(request_obj, "body", None) or getattr(request_obj, "data", None)
+            if isinstance(raw, (bytes, bytearray)):
+                body_bytes = bytes(raw)
+            elif isinstance(raw, str):
+                body_bytes = raw.encode("utf-8")
+        else:
+            body_bytes = json.dumps(body).encode("utf-8")
+
+        with app.test_client() as client:
+            resp = client.open(
+                path=path,
+                method=method,
+                data=body_bytes,
+                content_type="application/json",
+            )
+            payload = resp.get_data(as_text=True)
+            return {
+                "status": resp.status_code,
+                "headers": dict(resp.headers),
+                "body": payload,
+            }
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "status": 500,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({"error": "handler_adapter_crashed", "detail": f"{type(exc).__name__}: {exc}"}),
+        }
 
 
 if __name__ == "__main__":

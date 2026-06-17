@@ -544,14 +544,22 @@ def _write_response(basic_io: Any, status: int,
         yield chunk
 
 
-def handler(context: Any, basic_io: Any) -> Generator[bytes, None, None]:
-    """Catalyst Advanced I/O entrypoint.
+def handler(context: Any, basic_io: Any = None) -> Generator[bytes, None, None]:
+    """Catalyst Basic I/O entrypoint.
 
+    Catalyst's Basic I/O may invoke this as handler(basic_io) with the
+    request-handle as the first positional arg (no context). Accept both.
     Returns a generator of bytes — Catalyst forwards each yielded chunk to
     the client as the SSE response body. ``Content-Type`` is set via
     ``basic_io.set_header`` so browsers / Vercel AI SDK consume it as a
     Server-Sent Events stream.
     """
+    # Handle single-arg calling convention: handler(basic_io)
+    if basic_io is None and context is not None and (
+        hasattr(context, "get_argument") or hasattr(context, "write")
+        or hasattr(context, "get_request_body") or hasattr(context, "set_status")
+    ):
+        basic_io = context
     try:
         payload = _parse_body(basic_io)
         req = SynthRequest.from_payload(payload)
@@ -567,7 +575,7 @@ def handler(context: Any, basic_io: Any) -> Generator[bytes, None, None]:
 
 
 # Alias expected by some Catalyst function templates.
-def main(context: Any, basic_io: Any) -> Generator[bytes, None, None]:
+def main(context: Any, basic_io: Any = None) -> Generator[bytes, None, None]:
     yield from handler(context, basic_io)
 
 

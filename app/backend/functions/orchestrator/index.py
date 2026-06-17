@@ -740,11 +740,19 @@ def _write_response(
 # Catalyst Advanced I/O entrypoint
 # ---------------------------------------------------------------------------
 
-def handler(context: Any, basic_io: Any) -> Generator[bytes, None, None]:
-    """Catalyst Advanced I/O entrypoint — POST /orchestrator.
+def handler(context: Any, basic_io: Any = None) -> Generator[bytes, None, None]:
+    """Catalyst Basic I/O entrypoint — POST /orchestrator.
 
+    Catalyst's Basic I/O runtime may call this as handler(basic_io) with the
+    request-handle as the first arg (no context), so we accept either shape.
     Streams Server-Sent Events for the full query lifecycle.
     """
+    # Handle single-arg calling convention: handler(basic_io)
+    if basic_io is None and context is not None and (
+        hasattr(context, "get_argument") or hasattr(context, "write")
+        or hasattr(context, "get_request_body") or hasattr(context, "set_status")
+    ):
+        basic_io = context
     try:
         payload = _parse_body(basic_io)
         validated = _validate_payload(payload)
@@ -760,7 +768,7 @@ def handler(context: Any, basic_io: Any) -> Generator[bytes, None, None]:
     yield from _write_response(basic_io, 200, pipeline)
 
 
-def main(context: Any, basic_io: Any) -> Generator[bytes, None, None]:
+def main(context: Any, basic_io: Any = None) -> Generator[bytes, None, None]:
     """Alias expected by some Catalyst function templates."""
     yield from handler(context, basic_io)
 

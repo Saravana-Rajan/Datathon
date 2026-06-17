@@ -9,11 +9,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "KSP Saathi — Investigator's Companion",
+  title: "Sarvik — Investigator's Companion",
   description:
     "Conversational AI for Karnataka State Police investigators. Query, visualize, and forecast crime data by voice or text — Kannada-first, fully audited.",
-  applicationName: "KSP Saathi",
-  authors: [{ name: "KSP Saathi Team" }],
+  applicationName: "Sarvik",
+  authors: [{ name: "Sarvik Team" }],
   keywords: [
     "Karnataka Police",
     "KSP",

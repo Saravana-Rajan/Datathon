@@ -257,7 +257,7 @@ export function ChatMessage({
         isUser ? "justify-end" : "justify-start",
       )}
       role="listitem"
-      aria-label={isUser ? "Your message" : "Saathi response"}
+      aria-label={isUser ? "Your message" : "Sarvik response"}
     >
       {!isUser && (
         <div
