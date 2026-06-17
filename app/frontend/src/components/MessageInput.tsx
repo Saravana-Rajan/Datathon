@@ -56,8 +56,8 @@ export function MessageInput({
 
   const placeholder =
     language === "kn"
-      ? "ಪ್ರಶ್ನೆ ಕೇಳಿ... ಅಥವಾ ಮೈಕ್ ಒತ್ತಿ ಮಾತನಾಡಿ"
-      : "Ask anything... or tap the mic to speak";
+      ? "ಪ್ರಶ್ನೆ ಕೇಳಿ... English ಅಥವಾ ಕನ್ನಡ"
+      : "Ask anything... English or ಕನ್ನಡ";
 
   const isKannada = /[ಀ-೿]/.test(value);
 
@@ -65,7 +65,7 @@ export function MessageInput({
     <form
       onSubmit={onSubmit}
       className={cn(
-        "flex items-center gap-2 rounded-2xl border border-border/70 bg-card/95 p-1.5 shadow-sm backdrop-blur transition-all focus-within:border-primary/50 focus-within:shadow-md",
+        "flex items-center gap-2 rounded-full border border-slate-200/80 bg-white p-1.5 pl-5 shadow-[0_2px_18px_-4px_rgba(124,92,250,0.10)] transition-all focus-within:border-[#7c5cfa]/40 focus-within:shadow-[0_4px_24px_-2px_rgba(124,92,250,0.18)] dark:border-white/10 dark:bg-white/5",
         className,
       )}
       aria-label="Send a message"
@@ -108,7 +108,7 @@ export function MessageInput({
         }
       />
 
-      {/* Sophisticated mic button — gradient, glow, larger tap target */}
+      {/* Mic — small gray circle */}
       <button
         type="button"
         onClick={onToggleVoice}
@@ -124,32 +124,45 @@ export function MessageInput({
         }
         aria-pressed={isRecording}
         className={cn(
-          "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white transition-all duration-200",
-          "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+          "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-200",
+          "focus:outline-none focus:ring-2 focus:ring-[#7c5cfa] focus:ring-offset-1",
           "disabled:cursor-not-allowed disabled:opacity-50",
           isRecording
-            ? "mic-button-active bg-gradient-to-br from-red-500 to-red-700 shadow-lg"
-            : "bg-gradient-to-br from-[#1a2a5c] via-[#0c1a3d] to-[#050a1f] shadow-md hover:scale-[1.04] hover:shadow-xl hover:from-[#243882] hover:to-[#0c1a3d]",
+            ? "mic-button-active bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-md"
+            : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/15",
         )}
       >
         {isRecording ? (
           <>
-            <MicOff className="relative h-4 w-4" aria-hidden="true" />
+            <MicOff className="relative h-3.5 w-3.5" aria-hidden="true" />
             <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
             </span>
           </>
         ) : (
-          <>
-            <Mic className="h-4 w-4" aria-hidden="true" />
-            {/* Sound-wave hint emoji-free */}
-            <AudioLines
-              className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 text-[#C8A964] opacity-80"
-              aria-hidden="true"
-            />
-          </>
+          <Mic className="h-3.5 w-3.5" aria-hidden="true" />
         )}
+      </button>
+
+      {/* Live waveform — sits next to the mic; signals always-on listening */}
+      <button
+        type="button"
+        onClick={onToggleVoice}
+        disabled={isLoading}
+        aria-label={
+          language === "kn"
+            ? "ಲೈವ್ ಧ್ವನಿ ಮೋಡ್ ಆನ್/ಆಫ್"
+            : "Toggle live voice mode"
+        }
+        className={cn(
+          "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition-all duration-200",
+          "hover:bg-slate-100 hover:text-[#7c5cfa] dark:text-slate-400 dark:hover:bg-white/10",
+          "focus:outline-none focus:ring-2 focus:ring-[#7c5cfa] focus:ring-offset-1",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+        )}
+      >
+        <AudioLines className="h-4 w-4" aria-hidden="true" />
       </button>
 
       <Button
@@ -158,12 +171,17 @@ export function MessageInput({
         disabled={isLoading || value.trim().length === 0}
         aria-label="Send message"
         className={cn(
-          "h-11 w-11 shrink-0 rounded-xl transition-transform",
-          "hover:scale-[1.04] active:scale-95",
-          "bg-gradient-to-br from-primary to-blue-700 shadow-md",
+          "h-9 w-9 shrink-0 rounded-full transition-all",
+          "hover:scale-[1.05] active:scale-95",
+          "border-0 text-white shadow-md hover:shadow-lg",
         )}
+        style={{
+          background:
+            "linear-gradient(135deg, #7c5cfa 0%, #4f46e5 50%, #ec4899 100%)",
+          boxShadow: "0 4px 14px rgba(124, 92, 250, 0.35)",
+        }}
       >
-        <Send className="h-4 w-4" aria-hidden="true" />
+        <Send className="h-3.5 w-3.5" aria-hidden="true" />
       </Button>
     </form>
   );

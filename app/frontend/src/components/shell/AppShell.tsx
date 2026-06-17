@@ -134,8 +134,8 @@ function Sidebar({
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-white/5 bg-[#0c1a3d] text-slate-200 lg:flex",
-        collapsed ? "w-[68px]" : "w-[248px]"
+        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-slate-200/80 bg-[#F5F5F7] text-slate-700 lg:flex dark:border-white/10 dark:bg-[#0c1a3d] dark:text-slate-200",
+        collapsed ? "w-[68px]" : "w-[252px]"
       )}
       role="navigation"
       aria-label="Primary"
@@ -143,26 +143,24 @@ function Sidebar({
       {/* Brand block */}
       <Link
         href="/dashboard"
-        className="flex h-14 items-center gap-2 border-b border-white/5 px-4 hover:bg-white/[0.03]"
+        className="flex h-16 items-center gap-2.5 border-b border-slate-200/70 px-5 hover:bg-white/40 dark:border-white/5 dark:hover:bg-white/[0.03]"
       >
         <div
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm"
           style={{
-            background: "linear-gradient(180deg, #1e3a8a 0%, #0c1a3d 100%)",
-            border: "1px solid rgba(200,169,100,0.4)",
+            background:
+              "linear-gradient(135deg, #7c5cfa 0%, #4f46e5 50%, #ec4899 100%)",
+            boxShadow: "0 4px 12px rgba(124, 92, 250, 0.30)",
           }}
         >
-          <ShieldCheck className="h-4 w-4" style={{ color: "#C8A964" }} />
+          <ShieldCheck className="h-4 w-4 text-white" />
         </div>
         {!collapsed && (
           <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-tight text-white">
+            <div className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-white">
               Sarvik
             </div>
-            <div
-              className="text-[9px] uppercase tracking-[0.2em]"
-              style={{ color: "#C8A964" }}
-            >
+            <div className="text-[9px] font-medium uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
               KSP Investigator
             </div>
           </div>
@@ -170,14 +168,14 @@ function Sidebar({
       </Link>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-2 py-3">
+      <nav className="flex-1 overflow-y-auto px-2.5 py-3">
         {groups.map((g, gi) => {
           const items = visible.filter((n) => (n.group ?? "other") === g);
           const groupCopy = GROUP_LABEL[g];
           return (
-            <div key={g} className={gi > 0 ? "mt-4" : ""}>
+            <div key={g} className={gi > 0 ? "mt-5" : ""}>
               {!collapsed && groupCopy && (
-                <div className="px-3 pb-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500">
+                <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                   {groupCopy[language]}
                 </div>
               )}
@@ -192,18 +190,29 @@ function Sidebar({
                       <Link
                         href={item.href}
                         className={cn(
-                          "group flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
+                          "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all",
                           active
-                            ? "bg-white/10 text-white"
-                            : "text-slate-300 hover:bg-white/5 hover:text-white"
+                            ? "bg-white text-[#4f46e5] shadow-sm dark:bg-white/10 dark:text-white"
+                            : "text-slate-600 hover:bg-white/70 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                         )}
                         aria-current={active ? "page" : undefined}
                         title={collapsed ? item.label[language] : undefined}
                       >
+                        {active && (
+                          <span
+                            className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full"
+                            style={{
+                              background:
+                                "linear-gradient(180deg, #7c5cfa 0%, #4f46e5 100%)",
+                            }}
+                          />
+                        )}
                         <Icon
                           className={cn(
-                            "h-4 w-4 shrink-0",
-                            active ? "text-[#C8A964]" : "text-slate-400 group-hover:text-slate-200"
+                            "h-4 w-4 shrink-0 transition-colors",
+                            active
+                              ? "text-[#7c5cfa]"
+                              : "text-slate-400 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-200"
                           )}
                         />
                         {!collapsed && (
@@ -214,22 +223,16 @@ function Sidebar({
                             {item.badge && (
                               <span
                                 className={cn(
-                                  "rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
+                                  "rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
                                   item.badge.tone === "warning"
-                                    ? "bg-amber-500/20 text-amber-300"
+                                    ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
                                     : item.badge.tone === "success"
-                                    ? "bg-emerald-500/20 text-emerald-300"
-                                    : "bg-[#C8A964]/20 text-[#C8A964]"
+                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                                    : "bg-violet-100 text-[#7c5cfa] dark:bg-violet-500/20 dark:text-violet-300"
                                 )}
                               >
                                 {item.badge.text}
                               </span>
-                            )}
-                            {active && (
-                              <ChevronRight
-                                className="h-3.5 w-3.5 text-[#C8A964]"
-                                aria-hidden="true"
-                              />
                             )}
                           </>
                         )}
@@ -243,27 +246,13 @@ function Sidebar({
         })}
       </nav>
 
-      {/* Collapse toggle + status */}
-      <div className="border-t border-white/5 p-3">
-        {!collapsed && (
-          <div
-            className="mb-3 flex items-center gap-2 rounded-md border bg-emerald-500/10 px-2.5 py-2 text-[10px]"
-            style={{ borderColor: "rgba(16,185,129,0.25)" }}
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-            </span>
-            <div className="leading-tight">
-              <div className="font-medium text-emerald-200">India DC live</div>
-              <div className="text-emerald-300/70">asia-south1 · 22ms</div>
-            </div>
-          </div>
-        )}
+      {/* User card + collapse */}
+      <div className="border-t border-slate-200/70 p-3 dark:border-white/5">
+        {!collapsed && <SidebarUserCard />}
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="flex w-full items-center justify-center gap-2 rounded-md border border-white/10 px-2.5 py-1.5 text-xs text-slate-300 hover:bg-white/5 hover:text-white"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white/60 px-2.5 py-1.5 text-[11px] font-medium text-slate-500 transition-colors hover:bg-white hover:text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
@@ -275,8 +264,76 @@ function Sidebar({
             </>
           )}
         </button>
+        {!collapsed && (
+          <div className="mt-2.5 flex items-center justify-center gap-1.5 text-[9px] font-medium uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500">
+            <span>powered by</span>
+            <span className="spark-gradient-text font-semibold">Catalyst</span>
+          </div>
+        )}
       </div>
     </aside>
+  );
+}
+
+/**
+ * Sidebar user card — avatar (initials), name + email, sign-out arrow.
+ * Designed to match the SparkFinch reference profile cell at the bottom of
+ * the sidebar.
+ */
+function SidebarUserCard(): JSX.Element {
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+
+  const displayName = user?.name ?? "Guest Reviewer";
+  const displayEmail = user?.email ?? "guest@sarvik.local";
+  const initials = displayName
+    .split(/\s+/)
+    .map((s) => s[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  const handleSignOut = async () => {
+    try {
+      localStorage.removeItem("sarvik-guest-session");
+    } catch {
+      /* ignore */
+    }
+    await signOut();
+    router.replace("/");
+  };
+
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/70 bg-white p-2.5 shadow-sm dark:border-white/10 dark:bg-white/5">
+      <span
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white shadow-sm"
+        style={{
+          background:
+            "linear-gradient(135deg, #7c5cfa 0%, #ec4899 100%)",
+        }}
+        aria-hidden="true"
+      >
+        {initials || "G"}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col leading-tight">
+        <span className="truncate text-[12px] font-semibold text-slate-800 dark:text-slate-100">
+          {displayName}
+        </span>
+        <span className="truncate text-[10px] text-slate-500 dark:text-slate-400">
+          {displayEmail}
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-rose-500 dark:hover:bg-white/10"
+        aria-label="Sign out"
+        title="Sign out"
+      >
+        <LogOut className="h-3.5 w-3.5" />
+      </button>
+    </div>
   );
 }
 
@@ -415,7 +472,7 @@ function TopBar({
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-200 bg-white/80 px-4 backdrop-blur dark:border-white/10 dark:bg-[#0c1a3d]/80"
+      className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200/70 bg-[#FAFAFB]/85 px-5 backdrop-blur-xl dark:border-white/10 dark:bg-[#0c1a3d]/80"
       role="banner"
     >
       <button
@@ -483,7 +540,7 @@ function TopBar({
                 ? "FIR, ವ್ಯಕ್ತಿ, ಪ್ರಕರಣ ಹುಡುಕಿ..."
                 : "Search FIRs, people, cases..."
             }
-            className="h-8 w-full rounded-md border border-slate-200 bg-white/70 pl-8 pr-2 text-xs placeholder:text-slate-400 focus:border-[#1e3a8a] focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/20 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+            className="h-9 w-full rounded-full border border-slate-200 bg-white/80 pl-8 pr-2 text-xs placeholder:text-slate-400 focus:border-[#7c5cfa] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7c5cfa]/20 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
           />
           <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-slate-200 bg-slate-50 px-1 text-[9px] font-medium text-slate-500 sm:inline-block dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
             /
@@ -506,9 +563,9 @@ function TopBar({
               onClick={() => setLanguage(opt)}
               aria-pressed={language === opt}
               className={cn(
-                "rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+                "rounded-md px-2 py-0.5 text-[10px] font-semibold transition-all",
                 language === opt
-                  ? "bg-[#1e3a8a] text-white"
+                  ? "spark-gradient text-white shadow-sm"
                   : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
               )}
             >
@@ -529,11 +586,15 @@ function TopBar({
 
         <button
           type="button"
-          className="relative rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+          className="relative flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-600 transition-all hover:border-slate-300 hover:shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
           aria-label="Notifications"
         >
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-[#C8A964]" />
+          <Bell className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Notification</span>
+          <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-70" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
+          </span>
         </button>
 
         {/* User menu */}
@@ -546,8 +607,11 @@ function TopBar({
             aria-expanded={menuOpen}
           >
             <span
-              className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold"
-              style={{ background: "#1e3a8a", color: "white" }}
+              className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold text-white shadow-sm"
+              style={{
+                background:
+                  "linear-gradient(135deg, #7c5cfa 0%, #ec4899 100%)",
+              }}
               aria-hidden="true"
             >
               {(user?.name ?? "G").slice(0, 1).toUpperCase()}
@@ -666,7 +730,7 @@ export function AppShell({
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900 dark:bg-[#080f24] dark:text-slate-100">
+    <div className="flex min-h-screen bg-[#FAFAFB] text-slate-900 dark:bg-[#080f24] dark:text-slate-100">
       <Sidebar
         collapsed={collapsed}
         onToggleCollapse={toggleCollapse}

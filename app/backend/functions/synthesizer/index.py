@@ -1,16 +1,25 @@
-"""Synthesizer — KSP Saathi Catalyst Advanced I/O Function.
+"""Synthesizer — Sarvik Catalyst Basic I/O Function.
 
 Turns ``tool_results`` from the orchestrator (SQL rows, Cypher edges, RAG
-chunks, forecasts) into a streaming natural-language answer plus a
-visualization spec that the React frontend uses to update the map / network
-graph / chart panels live.
+chunks, forecasts) into a natural-language answer plus a visualization spec
+that the React frontend uses to update the map / network graph / chart panels.
 
-Streams Server-Sent Events:
+**Catalyst Basic I/O cannot return Python generators** — see CLAUDE.md
+"Catalyst BasicIO Streaming" gotcha. We therefore COLLECT every SSE-shaped
+event into a list and return a single JSON payload of the form:
 
-    data: {"type": "text_chunk", "content": "...partial..."}
-    data: {"type": "viz_spec", "map": {...}, "graph": {...}, "chart": {...}}
-    data: {"type": "audit_chain", "steps": [...]}
-    data: {"type": "done"}
+    {
+      "request_id": "...",
+      "events": [
+        {"type": "text_chunk", "content": "..."},
+        {"type": "viz_spec",   "map": {...}, "graph": {...}, "chart": {...}},
+        {"type": "audit_chain", "steps": [...]},
+        {"type": "done", "latency_ms": 1234}
+      ]
+    }
+
+Consumers (the orchestrator + the Next.js /api/chat BFF) iterate over
+``events`` and replay them to the browser as they would an SSE stream.
 
 Model selection (see design.md §10 + CLAUDE.md LLM strategy):
   * Kannada query OR ``router_decision.complexity == "high"`` → Gemini 2.5 Pro
@@ -18,13 +27,7 @@ Model selection (see design.md §10 + CLAUDE.md LLM strategy):
 
 The function ALWAYS writes a final audit entry to Catalyst NoSQL (collection
 ``saathi_audit_log``) holding the full transcript. Audit writes never block
-the SSE stream — they fan out on a background thread.
-
-Catalyst Advanced I/O contract:
-
-    The function receives the WSGI-style ``context`` + ``basic_io`` pair.
-    Returning a generator + the right Content-Type makes Catalyst proxy
-    the stream verbatim to the caller (SSE-compatible).
+the response — they fan out on a background thread.
 """
 
 from __future__ import annotations
@@ -471,23 +474,45 @@ def synthesize_stream(req: SynthRequest) -> Generator[bytes, None, None]:
 
 
 # ---------------------------------------------------------------------------
-# Catalyst Advanced I/O entrypoint
+# Event collection — used by the Basic I/O handler
 # ---------------------------------------------------------------------------
 
-SSE_HEADERS = {
-    "Content-Type": "text/event-stream; charset=utf-8",
-    "Cache-Control": "no-cache, no-transform",
-    "Connection": "keep-alive",
-    "X-Accel-Buffering": "no",  # disable proxy buffering
+JSON_HEADERS = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
 }
 
 
+def synthesize_collect(req: SynthRequest) -> list[dict[str, Any]]:
+    """Drain :func:`synthesize_stream` into a list of parsed event dicts.
+
+    Catalyst Basic I/O cannot return a generator (the runtime tries to
+    JSON-serialise the return value and 500s). We instead buffer every
+    SSE-shaped event in memory and surface them under ``events`` in the
+    JSON response. Consumers iterate the list and treat it identically
+    to a closed SSE stream.
+    """
+    events: list[dict[str, Any]] = []
+    for raw in synthesize_stream(req):
+        text = raw.decode("utf-8") if isinstance(raw, (bytes, bytearray)) else str(raw)
+        # Each SSE frame is "data: <json>\n\n"; we may also get multi-line
+        # frames if the generator changes shape later, so iterate every line.
+        for line in text.splitlines():
+            if not line.startswith("data:"):
+                continue
+            payload_str = line[5:].strip()
+            if not payload_str:
+                continue
+            try:
+                events.append(json.loads(payload_str))
+            except json.JSONDecodeError:
+                logger.warning("synthesize_collect: dropped malformed frame: %r",
+                               payload_str[:120])
+    return events
+
+
 def _parse_body(basic_io: Any) -> dict[str, Any]:
-    """Read JSON body from the Catalyst Advanced I/O request envelope."""
-    # Catalyst Advanced I/O exposes ``basic_io.get_argument`` for query
-    # params and ``basic_io.get_request_body`` for the raw body. We try a
-    # couple of shapes so the same code works in both the new SDK and
-    # local pytest harness.
+    """Read JSON body from the Catalyst Basic I/O request envelope."""
     if hasattr(basic_io, "get_request_body"):
         raw = basic_io.get_request_body()
     elif hasattr(basic_io, "body"):
@@ -511,72 +536,95 @@ def _parse_body(basic_io: Any) -> dict[str, Any]:
     raise ValueError(f"Unsupported request body type: {type(raw)!r}")
 
 
-def _write_response(basic_io: Any, status: int,
-                    body_iter: Iterable[bytes],
-                    headers: dict[str, str] | None = None) -> Generator[bytes, None, None]:
-    """Push headers + status to the Catalyst response and yield the body."""
-    hdrs = dict(headers or SSE_HEADERS)
-    # New Catalyst Python SDK shape.
+def _write_json(basic_io: Any, status: int, body: dict[str, Any]) -> dict[str, Any]:
+    """Serialise + write JSON via whatever Basic I/O response shape we got.
+
+    Mirrors the pattern used by the ``hello`` function so all Basic I/O
+    handlers in this project look the same.
+    """
+    payload = json.dumps(body, ensure_ascii=False)
+
     if hasattr(basic_io, "set_status"):
         try:
             basic_io.set_status(status)
         except Exception:  # pragma: no cover
             pass
+    if hasattr(basic_io, "set_content_type"):
+        try:
+            basic_io.set_content_type("application/json; charset=utf-8")
+        except Exception:  # pragma: no cover
+            pass
     if hasattr(basic_io, "set_header"):
-        for k, v in hdrs.items():
+        for k, v in JSON_HEADERS.items():
             try:
                 basic_io.set_header(k, v)
             except Exception:  # pragma: no cover
                 pass
-    elif hasattr(basic_io, "headers"):
+
+    if hasattr(basic_io, "write"):
         try:
-            basic_io.headers.update(hdrs)
+            basic_io.write(payload)
         except Exception:  # pragma: no cover
             pass
-
-    for chunk in body_iter:
-        if hasattr(basic_io, "write"):
-            try:
-                basic_io.write(chunk)
-                continue
-            except Exception:  # pragma: no cover
-                pass
-        yield chunk
+    return body
 
 
-def handler(context: Any, basic_io: Any = None) -> Generator[bytes, None, None]:
-    """Catalyst Basic I/O entrypoint.
+def handler(context: Any, basic_io: Any = None) -> dict[str, Any]:
+    """Catalyst Basic I/O entrypoint — returns a JSON dict (NOT a generator).
 
-    Catalyst's Basic I/O may invoke this as handler(basic_io) with the
-    request-handle as the first positional arg (no context). Accept both.
-    Returns a generator of bytes — Catalyst forwards each yielded chunk to
-    the client as the SSE response body. ``Content-Type`` is set via
-    ``basic_io.set_header`` so browsers / Vercel AI SDK consume it as a
-    Server-Sent Events stream.
+    Streaming SSE is not supported by Basic I/O (the runtime rejects
+    generator returns), so we collect every event in memory and surface
+    them under ``events``. The orchestrator + Next.js /api/chat BFF replay
+    these to the browser as if they were SSE frames.
     """
-    # Handle single-arg calling convention: handler(basic_io)
+    # Single-arg calling convention: handler(basic_io)
     if basic_io is None and context is not None and (
         hasattr(context, "get_argument") or hasattr(context, "write")
         or hasattr(context, "get_request_body") or hasattr(context, "set_status")
     ):
         basic_io = context
+
     try:
         payload = _parse_body(basic_io)
         req = SynthRequest.from_payload(payload)
     except (ValueError, json.JSONDecodeError) as exc:
-        error_iter = iter([
-            _sse({"type": "error", "code": "bad_request", "message": str(exc)}),
-            _sse({"type": "done"}),
-        ])
-        yield from _write_response(basic_io, 400, error_iter)
-        return
+        return _write_json(basic_io, 400, {
+            "ok": False,
+            "events": [
+                {"type": "error", "code": "bad_request", "message": str(exc)},
+                {"type": "done"},
+            ],
+        })
 
-    yield from _write_response(basic_io, 200, synthesize_stream(req))
+    try:
+        events = synthesize_collect(req)
+    except Exception as exc:  # noqa: BLE001 — last-ditch safety net
+        logger.exception("synthesizer crashed")
+        return _write_json(basic_io, 500, {
+            "ok": False,
+            "request_id": req.request_id,
+            "events": [
+                {"type": "error", "code": "synth_crashed", "message": str(exc)},
+                {"type": "done"},
+            ],
+        })
+
+    return _write_json(basic_io, 200, {
+        "ok": True,
+        "request_id": req.request_id,
+        "events": events,
+    })
 
 
 # Alias expected by some Catalyst function templates.
-def main(context: Any, basic_io: Any = None) -> Generator[bytes, None, None]:
-    yield from handler(context, basic_io)
+def main(context: Any, basic_io: Any = None) -> dict[str, Any]:
+    return handler(context, basic_io)
 
 
-__all__ = ["handler", "main", "synthesize_stream", "SynthRequest"]
+__all__ = [
+    "handler",
+    "main",
+    "synthesize_stream",
+    "synthesize_collect",
+    "SynthRequest",
+]

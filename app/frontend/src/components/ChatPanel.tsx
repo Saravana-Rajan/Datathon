@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useChat } from "@ai-sdk/react";
-import { ShieldCheck, Languages, AlertTriangle, Radio } from "lucide-react";
+import { ShieldCheck, Languages, AlertTriangle, Radio, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useKspStore, type Language } from "@/lib/store";
 import { ChatMessage, type ChatMessageLike } from "./ChatMessage";
@@ -10,6 +10,15 @@ import { MessageInput } from "./MessageInput";
 import { TypingIndicator } from "./TypingIndicator";
 import { SuggestionCard, DEFAULT_SUGGESTIONS } from "./SuggestionCard";
 import { VoiceModeOverlay } from "./VoiceModeOverlay";
+import { SparkOrb } from "./SparkOrb";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import dynamic from "next/dynamic";
+
+// Lazy load voice recorder to keep WASM out of SSR.
+const VoiceRecorder = dynamic(
+  () => import("./VoiceRecorder").then((m) => m.VoiceRecorder),
+  { ssr: false },
+);
 
 /**
  * Detect at runtime whether Gemini Live is wired up. Two preconditions:
@@ -583,11 +592,15 @@ export function ChatPanel({
       lastMessage.content.length === 0);
 
   return (
-    <Card className={cn("flex h-full flex-col overflow-hidden", className)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b py-3">
-        <div className="flex items-center gap-2">
+    <Card className={cn("flex h-full flex-col overflow-hidden rounded-2xl border-slate-200/70 bg-white shadow-[0_2px_20px_-8px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5", className)}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-slate-100 py-3 dark:border-white/5">
+        <div className="flex items-center gap-2.5">
           <div
-            className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm"
+            style={{
+              background:
+                "linear-gradient(135deg, #7c5cfa 0%, #4f46e5 50%, #ec4899 100%)",
+            }}
             aria-hidden="true"
           >
             <ShieldCheck className="h-4 w-4" />
@@ -669,21 +682,43 @@ export function ChatPanel({
         >
           <ul className="flex flex-col gap-3" role="list">
             {messages.length === 0 && (
-              <li className="m-auto max-w-md py-8 text-center text-sm text-muted-foreground">
-                <ShieldCheck
-                  className="mx-auto mb-2 h-8 w-8 text-primary/60"
-                  aria-hidden="true"
-                />
-                <p className="font-medium text-foreground">
+              <li className="m-auto flex w-full max-w-2xl flex-col items-center px-2 py-6 text-center">
+                <SparkOrb phase="idle" size={200} className="mb-6" />
+                <p
+                  className="chat-empty-title text-[22px] font-semibold tracking-tight text-slate-800 dark:text-white"
+                  style={
+                    language === "kn"
+                      ? {
+                          fontFamily:
+                            '"Tiro Kannada", "Noto Sans Kannada", "Nirmala UI", system-ui, serif',
+                        }
+                      : { letterSpacing: "-0.02em" }
+                  }
+                >
                   {language === "kn"
                     ? "ನಮಸ್ಕಾರ. ಯಾವ ಮಾಹಿತಿ ಬೇಕು?"
                     : "Namaskara. What do you want to investigate?"}
                 </p>
-                <p className="mt-1 text-xs">
+                <p className="mt-2 max-w-md text-[13px] text-slate-500 dark:text-slate-400">
                   {language === "kn"
-                    ? "ಧ್ವನಿ ಅಥವಾ ಪಠ್ಯದಿಂದ ಕೇಳಿ. ಪ್ರತಿ ಉತ್ತರಕ್ಕೂ ಪೂರ್ಣ ಆಡಿಟ್ ಲಭ್ಯ."
+                    ? "ಧ್ವನಿ ಅಥವಾ ಪಠ್ಯದಿಂದ ಕೇಳಿ. ಪ್ರತಿ ಉತ್ತರಕ್ಕೂ ಪೂರ್ಣ ಆಡಿಟ್."
                     : "Ask by voice or text. Every answer carries a full audit trail."}
                 </p>
+
+                {/* Slash-style suggestion chips */}
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                  {DEFAULT_SUGGESTIONS.slice(0, 5).map((s) => (
+                    <button
+                      key={s.title}
+                      type="button"
+                      onClick={() => sendSuggested(s.prompt)}
+                      className="spark-chip group"
+                    >
+                      <span className="spark-chip-prefix">/</span>
+                      <span className="truncate">{s.title}</span>
+                    </button>
+                  ))}
+                </div>
               </li>
             )}
 

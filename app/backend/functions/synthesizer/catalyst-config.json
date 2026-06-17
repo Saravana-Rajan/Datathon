@@ -4,7 +4,21 @@
     "type": "basicio",
     "stack": "python_3_11",
     "memory": 1024,
-    "timeout": 60
+    "timeout": 60,
+    "env_variables": {
+      "GEMINI_API_KEY": "***GEMINI_KEY_REDACTED***",
+      "GEMINI_TEXT_MODEL": "gemini-2.5-pro",
+      "GEMINI_EMBED_MODEL": "gemini-embedding-001",
+      "GEMINI_LIVE_MODEL": "gemini-live-2.5-flash-preview",
+      "AUDIT_TABLE": "audit_log",
+      "SESSION_TABLE": "session_state",
+      "NEO4J_URI": "neo4j+s://91c73e10.databases.neo4j.io",
+      "NEO4J_USERNAME": "91c73e10",
+      "NEO4J_PASSWORD": "***NEO4J_PASSWORD_REDACTED***",
+      "NEO4J_DATABASE": "91c73e10",
+      "MAPS_API_KEY": "***GOOGLE_MAPS_KEY_REDACTED***",
+      "LOG_LEVEL": "INFO"
+    }
   },
   "execution": {
     "main": "index.py"

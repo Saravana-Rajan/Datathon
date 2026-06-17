@@ -61,28 +61,42 @@ export function HeatmapLayer({
         weight: 1,
       }));
 
-    if (!heatmapRef.current) {
-      heatmapRef.current = new viz.HeatmapLayer({
-        data: points,
-        radius: radius ?? Math.max(18, Math.min(40, 800 / Math.max(1, points.length / 10))),
-        opacity: 0.65,
-        dissipating: true,
-      });
-    } else {
-      heatmapRef.current.setData(points);
+    // Google Maps HeatmapLayer was deprecated in v3.65 — wrap in try/catch so
+    // the whole investigation panel doesn't go white if the API throws.
+    try {
+      if (!heatmapRef.current) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        heatmapRef.current = new (viz as any).HeatmapLayer({
+          data: points,
+          radius:
+            radius ??
+            Math.max(18, Math.min(40, 800 / Math.max(1, points.length / 10))),
+          opacity: 0.65,
+          dissipating: true,
+        });
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (heatmapRef.current as any).setData?.(points);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (heatmapRef.current as any)?.setMap?.(visible ? map : null);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn("[HeatmapLayer] disabled:", err);
+      heatmapRef.current = null;
     }
 
-    heatmapRef.current.setMap(visible ? map : null);
-
     return () => {
-      heatmapRef.current?.setMap(null);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      try { (heatmapRef.current as any)?.setMap?.(null); } catch { /* ignore */ }
     };
   }, [map, incidents, visible, radius]);
 
   // Dispose entirely on unmount.
   React.useEffect(
     () => () => {
-      heatmapRef.current?.setMap(null);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      try { (heatmapRef.current as any)?.setMap?.(null); } catch { /* ignore */ }
       heatmapRef.current = null;
     },
     []

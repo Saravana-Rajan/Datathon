@@ -1,11 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, X, Mic } from "lucide-react";
+import { ChevronDown, X, Mic, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useKspStore, type Language } from "@/lib/store";
-import { VoiceOrb, type OrbPhase } from "./VoiceOrb";
+import { SparkOrb, type SparkOrbPhase } from "./SparkOrb";
 import dynamic from "next/dynamic";
+
+type OrbPhase = SparkOrbPhase;
 
 // Lazy-load the heavy VoiceRecorder (same reason ChatPanel does — vad-web WASM
 // must not run during SSG prerender).
@@ -162,7 +164,7 @@ export function VoiceModeOverlay({
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-white/70 backdrop-blur transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+            className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-slate-600 backdrop-blur transition-colors hover:bg-white hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#7c5cfa]/30"
             aria-label="Minimize voice mode"
           >
             <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
@@ -170,7 +172,7 @@ export function VoiceModeOverlay({
           </button>
 
           <div
-            className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-white/60 backdrop-blur"
+            className="rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7c5cfa] backdrop-blur"
             aria-live="polite"
           >
             {liveAvailable ? "Gemini Live" : "Dictation"}
@@ -179,7 +181,7 @@ export function VoiceModeOverlay({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-white/10 bg-white/5 p-2 text-white/70 backdrop-blur transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+            className="rounded-full border border-slate-200 bg-white/70 p-2 text-slate-600 backdrop-blur transition-colors hover:bg-white hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#7c5cfa]/30"
             aria-label="Close voice mode"
           >
             <X className="h-4 w-4" aria-hidden="true" />
@@ -189,7 +191,7 @@ export function VoiceModeOverlay({
         {/* Center stack: status, orb, subtitle */}
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
           <p
-            className="mb-8 text-[11px] font-semibold uppercase tracking-[0.4em] text-white/50"
+            className="mb-8 text-[11px] font-semibold uppercase tracking-[0.4em] text-slate-500"
             style={
               /[ಀ-೿]/.test(statusLabel)
                 ? {
@@ -203,12 +205,12 @@ export function VoiceModeOverlay({
             {statusLabel}
           </p>
 
-          <VoiceOrb phase={phase} size={240} />
+          <SparkOrb phase={phase} size={320} />
 
           <div className="mt-12 min-h-[5rem] max-w-2xl">
             {subtitle ? (
               <p
-                className="voice-subtitle text-2xl font-light leading-relaxed text-white/90"
+                className="voice-subtitle text-2xl font-light leading-relaxed text-slate-800 dark:text-white/90"
                 style={
                   subtitleIsKannada
                     ? {
@@ -222,7 +224,7 @@ export function VoiceModeOverlay({
                 {subtitle}
               </p>
             ) : (
-              <p className="text-base font-light tracking-wide text-white/40">
+              <p className="text-base font-light tracking-wide text-slate-500 dark:text-white/40">
                 {helperLabel}
               </p>
             )}
@@ -240,20 +242,39 @@ export function VoiceModeOverlay({
           />
         </div>
 
-        {/* Bottom action — large stop/close button */}
+        {/* Bottom action row — 3 pill controls (mic / stop / text-mode) */}
         <div className="flex justify-center pb-12 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="group relative flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-xl transition-all hover:scale-[1.03] hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/30"
-            aria-label="End voice conversation"
-          >
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-            </span>
-            {language === "kn" ? "ಮುಗಿಸಿ" : "Tap to stop"}
-          </button>
+          <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white/70 p-2 shadow-[0_8px_30px_-8px_rgba(124,92,250,0.25)] backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
+            <button
+              type="button"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200"
+              aria-label="Mute"
+            >
+              <Mic className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="group relative flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-[1.05] focus:outline-none focus:ring-2 focus:ring-rose-500/40"
+              style={{
+                background:
+                  "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                boxShadow: "0 8px 24px rgba(239, 68, 68, 0.35)",
+              }}
+              aria-label="End voice conversation"
+            >
+              <span className="absolute inset-2 rounded-full border-2 border-white/30" />
+              <span className="relative h-3 w-3 rounded-sm bg-white" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200 dark:bg-white/10 dark:text-slate-200"
+              aria-label="Switch to text mode"
+            >
+              <MessageSquare className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

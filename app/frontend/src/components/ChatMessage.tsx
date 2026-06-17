@@ -67,7 +67,7 @@ function renderInline(
           onClick={() => {
             if (requestId) onCitationClick(requestId, idx);
           }}
-          className="mx-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded bg-primary/10 px-1 align-middle text-[10px] font-semibold text-primary hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-ring"
+          className="citation-enter mx-0.5 inline-flex h-4 min-w-[1.125rem] items-center justify-center rounded-full bg-violet-100 px-1.5 align-middle text-[10px] font-semibold text-[#7c5cfa] hover:bg-violet-200 focus:outline-none focus:ring-2 focus:ring-[#7c5cfa]/30 dark:bg-violet-500/15 dark:text-violet-300"
           aria-label={`Open citation ${idx} in audit trail`}
         >
           {idx}
@@ -261,10 +261,14 @@ export function ChatMessage({
     >
       {!isUser && (
         <div
-          className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+          style={{
+            background:
+              "linear-gradient(135deg, #7c5cfa 0%, #4f46e5 50%, #ec4899 100%)",
+          }}
           aria-hidden="true"
         >
-          <ShieldCheck className="h-4 w-4" />
+          <ShieldCheck className="h-3.5 w-3.5" />
         </div>
       )}
 
@@ -276,10 +280,10 @@ export function ChatMessage({
         onTouchCancel={cancelLongPress}
         onTouchMove={cancelLongPress}
         className={cn(
-          "group relative max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm transition-colors",
+          "chat-message-enter group relative max-w-[82%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed transition-colors",
           isUser
-            ? "rounded-br-sm bg-primary text-primary-foreground"
-            : "rounded-bl-sm border bg-card text-card-foreground",
+            ? "rounded-br-md bg-white text-slate-800 shadow-[0_2px_8px_-2px_rgba(15,23,42,0.10)] ring-1 ring-slate-200/80"
+            : "rounded-bl-md bg-[#F1F1F4] text-slate-800 dark:bg-white/8 dark:text-slate-100",
           kannada && "font-kannada",
         )}
         style={
@@ -366,10 +370,10 @@ export function ChatMessage({
 
       {isUser && (
         <div
-          className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
+          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-semibold text-slate-700 shadow-sm dark:bg-white/10 dark:text-slate-200"
           aria-hidden="true"
         >
-          <User className="h-4 w-4" />
+          <User className="h-3.5 w-3.5" />
         </div>
       )}
     </div>

@@ -21,7 +21,7 @@
     ]
   },
   "client": {
-    "source": "../frontend/out",
+    "source": "client",
     "target": "yaksha-frontend"
   },
   "internal_codename": "ksp-saathi-backend",

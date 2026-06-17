@@ -109,7 +109,13 @@ class FakeInvoker:
         self.parallel_window.append((name, started, ended))
         if name not in self.responses:
             return {}
-        return self.responses[name]
+        canned = self.responses[name]
+        # Synthesizer responses are authored as a list of event dicts (matching
+        # the old streaming shape). The new Basic I/O synthesizer wraps them
+        # in ``{"events": [...]}``, so do the same here when needed.
+        if name == "synthesizer" and isinstance(canned, list):
+            return {"ok": True, "events": list(canned)}
+        return canned
 
     async def invoke_fire_and_forget(
         self,
@@ -434,3 +440,79 @@ async def test_sse_event_ordering(fake_invoker: FakeInvoker) -> None:
 ])
 def test_tools_for_intent(intent: str, expected: list[str]) -> None:
     assert index.tools_for_intent(intent) == expected
+
+
+# ---------------------------------------------------------------------------
+# Basic I/O handler — returns JSON dict (not a generator)
+# ---------------------------------------------------------------------------
+
+class _FakeBasicIO:
+    """Minimal stand-in for the Catalyst Basic I/O object."""
+
+    def __init__(self, body):
+        if isinstance(body, dict):
+            body = json.dumps(body)
+        if isinstance(body, str):
+            body = body.encode("utf-8")
+        self._body = body
+        self.status: int | None = None
+        self.headers: dict[str, str] = {}
+        self.written: bytearray = bytearray()
+
+    def get_request_body(self):
+        return self._body
+
+    def set_status(self, status: int) -> None:
+        self.status = status
+
+    def set_header(self, k: str, v: str) -> None:
+        self.headers[k] = v
+
+    def set_content_type(self, ct: str) -> None:
+        self.headers["Content-Type"] = ct
+
+    def write(self, chunk) -> None:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        self.written.extend(chunk)
+
+
+def test_handler_returns_json_dict(fake_invoker: FakeInvoker) -> None:
+    """Basic I/O handler must return a JSON dict (not a generator)."""
+    fake_invoker.responses["intent-router"] = {
+        "intent": "tabular_query",
+        "language": "en",
+        "confidence": 0.9,
+        "normalized_query": "show me FIRs",
+        "entities": {},
+    }
+    fake_invoker.responses["sql-generator"] = {"rows": []}
+    fake_invoker.responses["synthesizer"] = [
+        {"type": "text_chunk", "content": "ok"},
+        {"type": "done"},
+    ]
+
+    fake_io = _FakeBasicIO(body={"query": "show me FIRs", "user_role": "inspector"})
+    result = index.handler(context=None, basic_io=fake_io)
+
+    assert isinstance(result, dict), "handler must return a dict, not a generator"
+    assert result["ok"] is True
+    assert isinstance(result["events"], list)
+    types = [e["type"] for e in result["events"]]
+    assert types[0] == "started"
+    assert types[-1] == "orchestrator_done"
+    assert fake_io.status == 200
+    assert fake_io.headers.get("Content-Type", "").startswith("application/json")
+
+
+def test_handler_bad_request_returns_400_json() -> None:
+    """Empty body → 400 with structured error in events list."""
+    fake_io = _FakeBasicIO(body=b"")
+    result = index.handler(context=None, basic_io=fake_io)
+
+    assert isinstance(result, dict)
+    assert result["ok"] is False
+    assert fake_io.status == 400
+    types = [e["type"] for e in result["events"]]
+    assert "error" in types
+    assert result["events"][-1]["type"] == "orchestrator_done"

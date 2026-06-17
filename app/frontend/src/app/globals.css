@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Tiro+Kannada&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,69 +7,85 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* ─── SparkFinch / Sarvik LIGHT palette ────────────────────────────── */
+    /* App background  #FAFAFB */
+    --background: 240 7% 98%;
+    /* Foreground text #1A1A1A */
+    --foreground: 240 5% 11%;
 
+    /* Cards = white with subtle shadow */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 5% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 240 5% 11%;
 
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary = SparkFinch violet #7C5CFA */
+    --primary: 252 94% 67%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary = light grey #F5F5F7 */
+    --secondary: 240 9% 96%;
+    --secondary-foreground: 240 5% 20%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 9% 96%;
+    --muted-foreground: 240 4% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 252 94% 95%;
+    --accent-foreground: 252 94% 35%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    /* Subtle borders #E5E5E8 */
+    --border: 240 5% 90%;
+    --input: 240 5% 90%;
+    --ring: 252 94% 67%;
 
-    --radius: 0.5rem;
+    --radius: 0.875rem;
 
-    /* Sarvik brand tokens */
-    --ksp-navy: 222 56% 14%;
-    --ksp-khaki: 39 53% 59%;
+    /* Sarvik / SparkFinch brand tokens */
+    --spark-violet: 252 94% 67%;
+    --spark-indigo: 244 75% 59%;
+    --spark-pink: 327 87% 71%;
+    --spark-cyan: 199 89% 74%;
+    --spark-bg: 240 7% 98%;
+    --spark-sidebar: 240 9% 96%;
+
+    /* Legacy KSP tokens (kept for components that still read them) */
+    --ksp-navy: 252 94% 67%;
+    --ksp-khaki: 252 94% 67%;
   }
 
+  /* The user can still flip into dark via the topbar — keep dark vars sane. */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 240 18% 8%;
+    --foreground: 240 7% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 16% 12%;
+    --card-foreground: 240 7% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 16% 12%;
+    --popover-foreground: 240 7% 95%;
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 252 94% 72%;
+    --primary-foreground: 240 18% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 12% 18%;
+    --secondary-foreground: 240 7% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 12% 16%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 252 50% 24%;
+    --accent-foreground: 252 94% 90%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --border: 240 12% 22%;
+    --input: 240 12% 22%;
+    --ring: 252 94% 72%;
   }
 }
 
@@ -78,7 +95,18 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family:
+      "Inter",
+      -apple-system,
+      BlinkMacSystemFont,
+      system-ui,
+      sans-serif;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1,
+      "ss01" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -92,12 +120,31 @@
     serif;
 }
 
-/* ─── Voice orb animations ─────────────────────────────────────────────── */
+/* ─── SparkFinch gradient utility classes ─────────────────────────────── */
+.spark-gradient {
+  background: linear-gradient(135deg, #7c5cfa 0%, #4f46e5 100%);
+}
+.spark-gradient-text {
+  background: linear-gradient(135deg, #7c5cfa 0%, #4f46e5 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.spark-gradient-soft {
+  background: linear-gradient(
+    135deg,
+    rgba(124, 92, 250, 0.08) 0%,
+    rgba(79, 70, 229, 0.04) 100%
+  );
+}
 
-@keyframes orb-breath {
-  0%, 100% {
+/* ─── SparkOrb animations ─────────────────────────────────────────────── */
+
+@keyframes spark-breath {
+  0%,
+  100% {
     transform: scale(1);
-    opacity: 0.85;
+    opacity: 0.95;
   }
   50% {
     transform: scale(1.04);
@@ -105,15 +152,107 @@
   }
 }
 
-@keyframes orb-listening-pulse {
-  0%, 100% {
+@keyframes spark-listening {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.12);
+    transform: scale(1.10);
   }
 }
 
+@keyframes spark-speaking {
+  0% { transform: scale(1); }
+  18% { transform: scale(1.07); }
+  34% { transform: scale(1.03); }
+  52% { transform: scale(1.12); }
+  68% { transform: scale(1.05); }
+  84% { transform: scale(1.09); }
+  100% { transform: scale(1); }
+}
+
+@keyframes spark-thinking {
+  0%,
+  100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+@keyframes spark-halo-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.10); }
+}
+
+@keyframes spark-blob-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(6%, -4%) scale(1.08); }
+  66% { transform: translate(-4%, 4%) scale(0.94); }
+}
+@keyframes spark-blob-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-5%, 5%) scale(1.05); }
+  66% { transform: translate(4%, -3%) scale(0.96); }
+}
+@keyframes spark-blob-drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(3%, -4%) scale(1.07); }
+}
+
+.spark-core {
+  transform-origin: center;
+  will-change: transform;
+}
+.spark-core.spark-idle {
+  animation: spark-breath 4.5s ease-in-out infinite;
+}
+.spark-core.spark-listening {
+  animation: spark-listening 1.4s ease-in-out infinite;
+}
+.spark-core.spark-speaking {
+  animation: spark-speaking 1.8s ease-in-out infinite;
+}
+.spark-core.spark-thinking {
+  animation: spark-thinking 2.2s ease-in-out infinite;
+}
+.spark-core.spark-error {
+  animation: none;
+  filter: saturate(0.4);
+}
+
+.spark-halo {
+  animation: spark-halo-pulse 4s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+.spark-halo.spark-listening {
+  animation: spark-halo-pulse 1.8s ease-in-out infinite;
+}
+.spark-halo.spark-speaking {
+  animation: spark-halo-pulse 1.5s ease-in-out infinite;
+}
+
+.spark-blob {
+  will-change: transform;
+}
+.spark-blob-pink {
+  animation: spark-blob-drift-1 11s ease-in-out infinite;
+}
+.spark-blob-cyan {
+  animation: spark-blob-drift-2 13s ease-in-out infinite;
+}
+.spark-blob-violet {
+  animation: spark-blob-drift-3 9s ease-in-out infinite;
+}
+
+/* ─── Legacy VoiceOrb animations (kept; some routes still use them) ────── */
+
+@keyframes orb-breath {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+@keyframes orb-listening-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
 @keyframes orb-speaking-pulse {
   0% { transform: scale(1); }
   18% { transform: scale(1.08); }
@@ -123,17 +262,14 @@
   84% { transform: scale(1.10); }
   100% { transform: scale(1); }
 }
-
 @keyframes orb-thinking-shimmer {
   0%, 100% { opacity: 0.7; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.02); }
 }
-
 @keyframes orb-ring-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-
 @keyframes orb-halo-pulse {
   0%, 100% { opacity: 0.5; transform: scale(1); }
   50% { opacity: 0.9; transform: scale(1.15); }
@@ -143,39 +279,18 @@
   transform-origin: center;
   will-change: transform;
 }
+.orb-core.orb-idle { animation: orb-breath 3.4s ease-in-out infinite; }
+.orb-core.orb-listening { animation: orb-listening-pulse 1.2s ease-in-out infinite; }
+.orb-core.orb-speaking { animation: orb-speaking-pulse 1.8s ease-in-out infinite; }
+.orb-core.orb-thinking { animation: orb-thinking-shimmer 2s ease-in-out infinite; }
+.orb-core.orb-error { animation: none; }
 
-.orb-core.orb-idle {
-  animation: orb-breath 3.4s ease-in-out infinite;
-}
-.orb-core.orb-listening {
-  animation: orb-listening-pulse 1.2s ease-in-out infinite;
-}
-.orb-core.orb-speaking {
-  animation: orb-speaking-pulse 1.8s ease-in-out infinite;
-}
-.orb-core.orb-thinking {
-  animation: orb-thinking-shimmer 2s ease-in-out infinite;
-}
-.orb-core.orb-error {
-  animation: none;
-}
-
-.orb-ring {
-  animation: orb-ring-spin 22s linear infinite;
-  will-change: transform;
-}
-
-.orb-listening,
-.orb-speaking {
-  /* The halo div uses these classes too — drive the halo's pulse */
-}
-
+.orb-ring { animation: orb-ring-spin 22s linear infinite; will-change: transform; }
 [class*="orb-"][class*="rounded-full"][class*="blur-3xl"] {
   animation: orb-halo-pulse 2.8s ease-in-out infinite;
 }
 
 /* ─── Floating particles around the orb ─────────────────────────────── */
-
 @keyframes orb-particle-orbit-1 {
   0% { transform: translate(0, 0) scale(0.8); opacity: 0; }
   20% { opacity: 1; }
@@ -201,68 +316,59 @@
   border-radius: 9999px;
   background: radial-gradient(
     circle,
-    rgba(255, 220, 150, 0.95) 0%,
-    rgba(200, 169, 100, 0.4) 60%,
+    rgba(196, 181, 253, 0.95) 0%,
+    rgba(124, 92, 250, 0.4) 60%,
     transparent 100%
   );
   filter: blur(1px);
   pointer-events: none;
 }
-.orb-particle-1 {
-  animation: orb-particle-orbit-1 3.4s ease-out infinite;
-}
-.orb-particle-2 {
-  animation: orb-particle-orbit-2 4.1s ease-out infinite;
-  animation-delay: 0.6s;
-}
-.orb-particle-3 {
-  animation: orb-particle-orbit-3 3.8s ease-out infinite;
-  animation-delay: 1.2s;
-}
+.orb-particle-1 { animation: orb-particle-orbit-1 3.4s ease-out infinite; }
+.orb-particle-2 { animation: orb-particle-orbit-2 4.1s ease-out infinite; animation-delay: 0.6s; }
+.orb-particle-3 { animation: orb-particle-orbit-3 3.8s ease-out infinite; animation-delay: 1.2s; }
 
-/* ─── Voice mode overlay backdrop ──────────────────────────────────────── */
+/* ─── Voice mode overlay backdrop (light SparkFinch variant) ──────────── */
 
 .voice-overlay {
-  /* Dark navy gradient base */
   background:
     radial-gradient(
       ellipse at 30% 20%,
-      rgba(40, 60, 120, 0.45) 0%,
+      rgba(196, 181, 253, 0.45) 0%,
       transparent 50%
     ),
     radial-gradient(
       ellipse at 70% 80%,
-      rgba(80, 60, 30, 0.35) 0%,
+      rgba(125, 211, 252, 0.35) 0%,
       transparent 55%
     ),
-    linear-gradient(180deg, #050a1f 0%, #0c1a3d 60%, #050a1f 100%);
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(255, 230, 245, 0.3) 0%,
+      transparent 70%
+    ),
+    linear-gradient(180deg, #fafafb 0%, #f3eefe 60%, #fafafb 100%);
 }
 
 .voice-overlay-backdrop {
-  background:
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(255, 255, 255, 0.02) 0%,
-      transparent 60%
-    );
-  backdrop-filter: blur(40px) saturate(1.2);
-  -webkit-backdrop-filter: blur(40px) saturate(1.2);
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 255, 255, 0.05) 0%,
+    transparent 60%
+  );
+  backdrop-filter: blur(32px) saturate(1.15);
+  -webkit-backdrop-filter: blur(32px) saturate(1.15);
 }
 
-/* Hide the inline VoiceRecorder default UI when used inside the overlay —
-   keep it mounted (for VAD + Gemini Live audio pipeline) but pull it
-   visually offscreen. The overlay renders its own controls. */
 .voice-recorder-host {
   position: absolute;
   width: 1px;
   height: 1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
-  pointer-events: auto; /* keep clickable in case of fallback */
+  pointer-events: auto;
   opacity: 0;
 }
 
-/* Subtitle fade-in when transcript updates */
 @keyframes subtitle-fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -280,12 +386,10 @@
   animation: title-fade-up 500ms ease-out;
 }
 
-/* ─── Suggestion card micro-interaction polish ─────────────────────────── */
 .suggestion-card {
   transform: translateZ(0);
 }
 
-/* ─── New assistant message fade-in ────────────────────────────────────── */
 @keyframes message-fade-up {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
@@ -294,17 +398,17 @@
   animation: message-fade-up 300ms ease-out;
 }
 
-/* ─── Sophisticated mic button ─────────────────────────────────────────── */
+/* ─── Mic button glow ─────────────────────────────────────────────────── */
 @keyframes mic-glow-pulse {
   0%, 100% {
     box-shadow:
-      0 0 0 0 rgba(96, 165, 250, 0.45),
-      0 4px 12px rgba(12, 26, 61, 0.18);
+      0 0 0 0 rgba(124, 92, 250, 0.45),
+      0 4px 12px rgba(124, 92, 250, 0.18);
   }
   50% {
     box-shadow:
-      0 0 0 8px rgba(96, 165, 250, 0),
-      0 6px 16px rgba(12, 26, 61, 0.25);
+      0 0 0 8px rgba(124, 92, 250, 0),
+      0 6px 16px rgba(124, 92, 250, 0.25);
   }
 }
 
@@ -320,4 +424,28 @@
 }
 .citation-enter {
   animation: citation-bounce 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Tag chip (the /sparkfinch style slash pill) */
+.spark-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  background: hsl(var(--secondary));
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid hsl(var(--border));
+  transition: all 0.15s ease;
+}
+.spark-chip:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+  border-color: hsl(var(--accent));
+}
+.spark-chip-prefix {
+  color: hsl(var(--primary));
+  font-weight: 600;
 }

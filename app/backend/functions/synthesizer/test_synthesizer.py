@@ -27,7 +27,12 @@ if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
 import index  # noqa: E402  — module under test
-from index import SynthRequest, synthesize_stream, handler  # noqa: E402
+from index import (  # noqa: E402
+    SynthRequest,
+    synthesize_stream,
+    synthesize_collect,
+    handler,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -145,6 +150,14 @@ class _FakeBasicIO:
 
     def set_header(self, k: str, v: str) -> None:
         self.headers[k] = v
+
+    def set_content_type(self, ct: str) -> None:
+        self.headers["Content-Type"] = ct
+
+    def write(self, chunk) -> None:
+        if isinstance(chunk, str):
+            chunk = chunk.encode("utf-8")
+        self.written.extend(chunk)
 
 
 def _decode_sse(stream: Iterable[bytes]) -> list[dict]:
@@ -294,35 +307,54 @@ def test_complex_routes_to_gemini_even_in_english(monkeypatch, english_payload):
     assert events[-1]["type"] == "done"
 
 
-def test_bad_request_returns_sse_error(monkeypatch):
-    fake_io = _FakeBasicIO(body=b"")  # empty -> ValueError
-    out = b"".join(handler(context=None, basic_io=fake_io))
-    decoded = _decode_sse([out])
-    assert decoded[0]["type"] == "error"
-    assert decoded[0]["code"] == "bad_request"
-    assert decoded[-1]["type"] == "done"
+def test_bad_request_returns_json_error(monkeypatch):
+    """Empty body → handler returns a JSON dict with an SSE-shaped error event."""
+    fake_io = _FakeBasicIO(body=b"")
+    result = handler(context=None, basic_io=fake_io)
+
+    assert isinstance(result, dict)
+    assert result["ok"] is False
+    events = result["events"]
+    assert events[0]["type"] == "error"
+    assert events[0]["code"] == "bad_request"
+    assert events[-1]["type"] == "done"
     assert fake_io.status == 400
+    assert fake_io.headers.get("Content-Type", "").startswith("application/json")
+
+
+def test_synthesize_collect_returns_event_list(monkeypatch, english_payload):
+    """synthesize_collect() drains the generator into parsed event dicts."""
+    monkeypatch.setattr(index, "_stream_qwen",
+                        lambda p, s, *, model: _english_chunks())
+
+    req = SynthRequest.from_payload(english_payload)
+    events = synthesize_collect(req)
+
+    assert isinstance(events, list)
+    assert all(isinstance(e, dict) and "type" in e for e in events)
+    types_seen = {e["type"] for e in events}
+    assert "text_chunk" in types_seen
+    assert "viz_spec" in types_seen
+    assert "audit_chain" in types_seen
+    assert events[-1]["type"] == "done"
 
 
 def test_full_handler_smoke(monkeypatch, english_payload):
-    """End-to-end through ``handler`` — confirms SSE headers + stream."""
+    """End-to-end through ``handler`` — returns JSON dict with events list."""
     monkeypatch.setattr(index, "_stream_qwen",
                         lambda p, s, *, model: _english_chunks())
 
     fake_io = _FakeBasicIO(body=english_payload)
-    chunks = list(handler(context=None, basic_io=fake_io))
-    # _write_response will preferentially call basic_io.write; assert that
-    # everything we expect to send made it through one of the channels.
-    if fake_io.written:
-        data = bytes(fake_io.written)
-    else:
-        data = b"".join(chunks)
-    events = _decode_sse([data])
+    result = handler(context=None, basic_io=fake_io)
 
+    assert isinstance(result, dict)
+    assert result["ok"] is True
+    assert result["request_id"] == "req_eng_001"
+    events = result["events"]
     types_seen = {e["type"] for e in events}
     assert "text_chunk" in types_seen
     assert "viz_spec" in types_seen
     assert "audit_chain" in types_seen
     assert events[-1]["type"] == "done"
     assert fake_io.status == 200
-    assert fake_io.headers.get("Content-Type", "").startswith("text/event-stream")
+    assert fake_io.headers.get("Content-Type", "").startswith("application/json")

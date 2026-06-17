@@ -222,6 +222,34 @@ All 9 functions live at: `https://sarvik-60074155874.development.catalystserverl
 - Transient pip failures happen — just retry the specific function
 - All commands need `cd app/backend` first (or pass `-p Sarvik`)
 
+### Basic I/O CANNOT return generators (learned 2026-06-17 — synthesizer + orchestrator both 500'd)
+**Catalyst Basic I/O functions CANNOT return Python generators.** The runtime
+attempts to JSON-serialise the return value and 500s the moment it hits an
+iterator — there is no streaming-SSE escape hatch in this function type. The
+old "yield SSE bytes from handler" pattern works locally with `b"".join(...)`
+but fails the instant Catalyst dispatches the function.
+
+**Workarounds (pick one):**
+1. **Collect-and-return-once (what we did for synthesizer + orchestrator).**
+   Buffer every SSE-shaped event into a list and return a single JSON payload:
+   ```json
+   {"ok": true, "request_id": "...", "events": [{"type":"text_chunk",...}, ...]}
+   ```
+   Consumers iterate `events` and replay them as if they were a closed SSE
+   stream. Sacrifices token-by-token streaming but works on Basic I/O.
+2. **Switch function `type` to `event`** (no HTTP response, fire-and-forget).
+   Catalyst Signals / Cron triggers it. The user polls a result table for
+   completion. Good fit for long-running audit / pipeline jobs.
+3. **Switch function `type` to `job`** (long-running, results queried
+   separately via a job-id). Best for forecasting / batch RAG re-indexing.
+
+**Streaming SSE end-to-end requires AppSail** (full WSGI/ASGI server, not
+Basic I/O). If the demo ever needs true progressive token rendering for
+Kannada synthesis, promote the synthesizer to AppSail — but for the
+current build, the collect-and-return pattern is enough because the
+Next.js `/api/chat` BFF can still emit SSE to the browser by iterating
+the buffered list and yielding one frame per event.
+
 ## What to NOT do
 
 - ❌ Don't mention Sarvam.ai as a recommendation (replaced by Gemini Live API)

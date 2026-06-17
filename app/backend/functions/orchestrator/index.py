@@ -1,8 +1,14 @@
-"""KSP Saathi — Orchestrator (Catalyst Advanced I/O Function).
+"""Sarvik — Orchestrator (Catalyst Basic I/O Function).
 
 This is the BRAIN of Sarvik. It REPLACES the Catalyst Circuits YAML flow
 because Catalyst Circuits is not available in the India DC (see
 ``design.md`` §18 Decision Log 2026-06-16).
+
+**Catalyst Basic I/O cannot return Python generators** — the runtime
+500s on generator returns. Both the orchestrator and the synthesizer
+therefore buffer their SSE-shaped events in memory and return a single
+JSON payload of the form ``{"events": [...]}``. The Next.js /api/chat
+BFF replays the list to the browser as if it were a closed SSE stream.
 
 Spec source-of-truth: ``app/backend/circuits/main-query-flow.yaml`` — this
 module implements the same 4-step pipeline in Python, with proper
@@ -68,7 +74,7 @@ import sys
 import time
 import traceback
 import uuid
-from typing import Any, AsyncGenerator, Generator, Iterable
+from typing import Any, AsyncGenerator, Generator
 
 # Make sibling shared/ importable when bundled by Catalyst.
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -85,7 +91,7 @@ from invoke_helpers import (  # noqa: E402
     InvokeTimeout,
     invoke_function,
     invoke_fire_and_forget,
-    stream_function,
+    stream_function,  # kept import for backwards compat / tests
 )
 
 logger = logging.getLogger("ksp_saathi.orchestrator")
@@ -449,31 +455,26 @@ async def _orchestrate_inner(
     final_answer_text = ""
     synth_started = time.perf_counter()
     try:
-        async with stream_function(
+        # Synthesizer is a Basic I/O function now (no streaming) — it
+        # returns ``{"events": [...]}`` after fully buffering its output.
+        # We forward each event to the queue in order so downstream
+        # consumers see the same shape they would have got from SSE.
+        synth_resp = await invoke_function(
             "synthesizer", synth_payload,
             timeout=SYNTH_TIMEOUT_S, client=client,
-        ) as chunks:
-            buffer = b""
-            async for raw_chunk in chunks:
-                buffer += raw_chunk
-                # Forward SSE event-by-event so partial UI rendering works.
-                while b"\n\n" in buffer:
-                    event_bytes, buffer = buffer.split(b"\n\n", 1)
-                    event_bytes_full = event_bytes + b"\n\n"
-                    # Tap into text_chunk events so we can stash the final
-                    # answer for the audit logger — never block the stream.
-                    try:
-                        for line in event_bytes.split(b"\n"):
-                            if line.startswith(b"data:"):
-                                obj = json.loads(line[5:].decode("utf-8").strip())
-                                if obj.get("type") == "text_chunk":
-                                    final_answer_text += obj.get("content") or ""
-                    except Exception:  # noqa: BLE001 — best-effort tap
-                        pass
-                    await queue.put(event_bytes_full)
-            # Flush any tail bytes (synthesizer should end on \n\n already).
-            if buffer.strip():
-                await queue.put(buffer)
+        )
+        synth_events = synth_resp.get("events") if isinstance(synth_resp, dict) else None
+        if not isinstance(synth_events, list):
+            raise InvokeError(
+                "synthesizer returned no 'events' list",
+                tool="synthesizer",
+            )
+        for event in synth_events:
+            if not isinstance(event, dict):
+                continue
+            if event.get("type") == "text_chunk":
+                final_answer_text += event.get("content") or ""
+            await queue.put(_sse(event))
     except InvokeTimeout as exc:
         await queue.put(_sse({
             "type": "error", "stage": "synth",
@@ -486,7 +487,7 @@ async def _orchestrate_inner(
             "request_id": request_id,
         }))
     except Exception as exc:  # noqa: BLE001
-        logger.error("synthesizer proxy crashed: %s\n%s", exc, traceback.format_exc())
+        logger.error("synthesizer call crashed: %s\n%s", exc, traceback.format_exc())
         await queue.put(_sse({
             "type": "error", "stage": "synth",
             "message": str(exc), "request_id": request_id,
@@ -691,86 +692,145 @@ def _validate_payload(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Response writer — same shape as the synthesizer for consistency
+# Response writer — Basic I/O returns JSON (not SSE)
 # ---------------------------------------------------------------------------
 
-SSE_HEADERS = {
-    "Content-Type": "text/event-stream; charset=utf-8",
-    "Cache-Control": "no-cache, no-transform",
-    "Connection": "keep-alive",
-    "X-Accel-Buffering": "no",  # disable proxy buffering for true streaming
+JSON_HEADERS = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
 }
 
 
-def _write_response(
-    basic_io: Any,
-    status: int,
-    body_iter: Iterable[bytes],
-    headers: dict[str, str] | None = None,
-) -> Generator[bytes, None, None]:
-    hdrs = dict(headers or SSE_HEADERS)
+def _write_json(basic_io: Any, status: int, body: dict[str, Any]) -> dict[str, Any]:
+    """Serialise + write a JSON response via whatever shape Basic I/O exposes."""
+    payload = json.dumps(body, ensure_ascii=False)
+
     if hasattr(basic_io, "set_status"):
         try:
             basic_io.set_status(status)
         except Exception:  # pragma: no cover
             pass
+    if hasattr(basic_io, "set_content_type"):
+        try:
+            basic_io.set_content_type("application/json; charset=utf-8")
+        except Exception:  # pragma: no cover
+            pass
     if hasattr(basic_io, "set_header"):
-        for k, v in hdrs.items():
+        for k, v in JSON_HEADERS.items():
             try:
                 basic_io.set_header(k, v)
             except Exception:  # pragma: no cover
                 pass
-    elif hasattr(basic_io, "headers"):
+
+    if hasattr(basic_io, "write"):
         try:
-            basic_io.headers.update(hdrs)
+            basic_io.write(payload)
         except Exception:  # pragma: no cover
             pass
+    return body
 
-    for chunk in body_iter:
-        if hasattr(basic_io, "write"):
-            try:
-                basic_io.write(chunk)
+
+def collect_pipeline_events(
+    *,
+    query: str,
+    language_hint: str = "auto",
+    session_id: str = "",
+    user_role: str = "unknown",
+) -> list[dict[str, Any]]:
+    """Drain :func:`run_pipeline_sync` into a list of parsed event dicts.
+
+    Catalyst Basic I/O cannot return a generator (the runtime serialises
+    the return and 500s on iterators), so we buffer every SSE-shaped
+    event in memory and surface them under ``events`` in the JSON response.
+    """
+    events: list[dict[str, Any]] = []
+    for raw in run_pipeline_sync(
+        query=query,
+        language_hint=language_hint,
+        session_id=session_id,
+        user_role=user_role,
+    ):
+        text = raw.decode("utf-8") if isinstance(raw, (bytes, bytearray)) else str(raw)
+        for line in text.splitlines():
+            if not line.startswith("data:"):
                 continue
-            except Exception:  # pragma: no cover
-                pass
-        yield chunk
+            payload_str = line[5:].strip()
+            if not payload_str:
+                continue
+            try:
+                events.append(json.loads(payload_str))
+            except json.JSONDecodeError:
+                logger.warning("collect_pipeline_events: dropped malformed frame: %r",
+                               payload_str[:120])
+    return events
 
 
 # ---------------------------------------------------------------------------
-# Catalyst Advanced I/O entrypoint
+# Catalyst Basic I/O entrypoint
 # ---------------------------------------------------------------------------
 
-def handler(context: Any, basic_io: Any = None) -> Generator[bytes, None, None]:
+def handler(context: Any, basic_io: Any = None) -> dict[str, Any]:
     """Catalyst Basic I/O entrypoint — POST /orchestrator.
 
-    Catalyst's Basic I/O runtime may call this as handler(basic_io) with the
-    request-handle as the first arg (no context), so we accept either shape.
-    Streams Server-Sent Events for the full query lifecycle.
+    Returns a JSON dict (Basic I/O cannot return generators). The full
+    pipeline runs synchronously, every SSE-shaped event is collected
+    into ``events``, and the response shape is:
+
+        {
+          "ok": true,
+          "request_id": "...",
+          "events": [ {"type": "started", ...}, ... ]
+        }
     """
-    # Handle single-arg calling convention: handler(basic_io)
+    # Single-arg calling convention: handler(basic_io)
     if basic_io is None and context is not None and (
         hasattr(context, "get_argument") or hasattr(context, "write")
         or hasattr(context, "get_request_body") or hasattr(context, "set_status")
     ):
         basic_io = context
+
     try:
         payload = _parse_body(basic_io)
         validated = _validate_payload(payload)
     except (ValueError, json.JSONDecodeError) as exc:
-        error_iter = iter([
-            _sse({"type": "error", "stage": "validation", "message": str(exc)}),
-            _sse({"type": "orchestrator_done", "total_ms": 0}),
-        ])
-        yield from _write_response(basic_io, 400, error_iter)
-        return
+        return _write_json(basic_io, 400, {
+            "ok": False,
+            "events": [
+                {"type": "error", "stage": "validation", "message": str(exc)},
+                {"type": "orchestrator_done", "total_ms": 0},
+            ],
+        })
 
-    pipeline = run_pipeline_sync(**validated)
-    yield from _write_response(basic_io, 200, pipeline)
+    try:
+        events = collect_pipeline_events(**validated)
+    except Exception as exc:  # noqa: BLE001 — last-ditch safety net
+        logger.exception("orchestrator crashed")
+        return _write_json(basic_io, 500, {
+            "ok": False,
+            "events": [
+                {"type": "error", "stage": "orchestrator", "message": str(exc)},
+                {"type": "orchestrator_done", "total_ms": 0},
+            ],
+        })
+
+    # Surface the request_id at the top level so consumers don't have to
+    # scan the events list to find it.
+    request_id = ""
+    for ev in events:
+        if isinstance(ev, dict) and ev.get("request_id"):
+            request_id = ev["request_id"]
+            break
+
+    return _write_json(basic_io, 200, {
+        "ok": True,
+        "request_id": request_id,
+        "events": events,
+    })
 
 
-def main(context: Any, basic_io: Any = None) -> Generator[bytes, None, None]:
+def main(context: Any, basic_io: Any = None) -> dict[str, Any]:
     """Alias expected by some Catalyst function templates."""
-    yield from handler(context, basic_io)
+    return handler(context, basic_io)
 
 
 __all__ = [
@@ -778,5 +838,6 @@ __all__ = [
     "main",
     "orchestrate_stream",
     "run_pipeline_sync",
+    "collect_pipeline_events",
     "tools_for_intent",
 ]
