@@ -17,12 +17,24 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENV_FILE="$PROJECT_ROOT/backend/.env"
 
-# --- Static values (Catalyst self-client already created) ---
+# --- Static (non-secret) values ---
 CATALYST_ORG_ID="60074155874"
 CATALYST_PROJECT_ID="47060000000020024"
-CATALYST_CLIENT_ID="***CATALYST_CLIENT_ID_REDACTED***"
-CATALYST_CLIENT_SECRET="***CATALYST_CLIENT_SECRET_REDACTED***"
 CATALYST_TOKEN_ENDPOINT="https://accounts.zoho.in/oauth/v2/token"
+
+# --- Secrets must be provided at runtime (env or .env) ---
+# Get a fresh Self Client at https://api-console.zoho.in (rotate often)
+CATALYST_CLIENT_ID="${CATALYST_CLIENT_ID:-}"
+CATALYST_CLIENT_SECRET="${CATALYST_CLIENT_SECRET:-}"
+
+if [ -z "$CATALYST_CLIENT_ID" ] || [ -z "$CATALYST_CLIENT_SECRET" ]; then
+    echo "ERROR: CATALYST_CLIENT_ID and CATALYST_CLIENT_SECRET must be set."
+    echo "  Get them by creating a Self Client at https://api-console.zoho.in"
+    echo "  Then export them in your shell or add to your .env file:"
+    echo "    export CATALYST_CLIENT_ID=1000.xxxxxxxx"
+    echo "    export CATALYST_CLIENT_SECRET=xxxxxxxx"
+    exit 1
+fi
 
 echo
 echo "Sarvik .env setup"
