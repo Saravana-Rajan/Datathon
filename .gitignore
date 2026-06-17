@@ -17,6 +17,13 @@ secrets/
 oauth-tokens*.json
 *.refresh_token
 catalyst-credentials*.json
+# Catalyst config overrides that may contain secrets — only commit templates
+**/catalyst-config.local.json
+**/catalyst-config.*.local.json
+**/catalyst-config.deploy.json
+**/env_variables.json
+# Backup of catalyst-config during deploy-with-secrets
+**/catalyst-config.json.bak
 
 # Large generated data — keep schema + sample, NOT full 50K records
 data/firs.jsonl

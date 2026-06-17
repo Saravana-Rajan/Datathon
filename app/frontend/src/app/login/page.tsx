@@ -203,7 +203,7 @@ function GoogleMark({ className }: { className?: string }) {
   );
 }
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params?.get("next") || "/";
@@ -534,5 +534,20 @@ export default function LoginPage() {
         {t.footerRegion} · {t.footerLine}
       </footer>
     </main>
+  );
+}
+
+// Wrap in Suspense so useSearchParams() doesn't break static export.
+export default function LoginPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#0c1a3d] text-slate-100">
+          <Loader2 className="h-6 w-6 animate-spin text-[#d4a857]" aria-hidden="true" />
+        </main>
+      }
+    >
+      <LoginPageInner />
+    </React.Suspense>
   );
 }

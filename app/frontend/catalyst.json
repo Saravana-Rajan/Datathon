@@ -1,18 +1,19 @@
 {
   "project_id": "47060000000020024",
-  "org_id": "60074155874",
-  "project_name": "Sarvik",
-  "region": "IN",
-  "environment": "Development",
-  "console_url": "https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020024/Development#/slate",
-  "client": {
-    "name": "sarvik-frontend",
-    "source": "out",
-    "index_page": "index.html",
-    "error_page": "404.html",
-    "stack": "node18",
-    "build_command": "npm run build",
-    "deploy_path": "out"
+  "project": {
+    "id": "47060000000020024",
+    "org_id": "60074155874",
+    "project_name": "Sarvik",
+    "region": "IN"
   },
-  "notes": "Static export from Next.js. Build with `npm run build` then deploy with `catalyst deploy --only web-client-hosting`."
+  "client": {
+    "source": "out",
+    "target": "yaksha-frontend"
+  },
+  "data_center": "console.catalyst.zoho.in",
+  "environment": "Development",
+  "console_url": "https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020024/Development",
+  "features": {
+    "web-client-hosting": { "enabled": true }
+  }
 }
