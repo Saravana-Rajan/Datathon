@@ -55,11 +55,11 @@ function InvestigateInner() {
       }
     >
       <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <div className="min-h-[70vh] lg:min-h-0">
+        <div className="min-h-[60vh] sm:min-h-[70vh] lg:min-h-0">
           <ChatPanel apiEndpoint={ORCHESTRATOR_ENDPOINT} />
         </div>
 
-        <div className="min-h-[70vh] lg:min-h-0">
+        <div className="min-h-[50vh] sm:min-h-[70vh] lg:min-h-0">
           <Card className="flex h-full flex-col">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">

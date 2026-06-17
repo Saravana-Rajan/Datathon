@@ -24,6 +24,7 @@ import {
   Moon,
   Sparkles,
   ShieldCheck,
+  Menu,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/catalyst-auth";
@@ -134,34 +135,37 @@ function Sidebar({
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-slate-200/80 bg-[#F5F5F7] text-slate-700 lg:flex dark:border-white/10 dark:bg-[#0c1a3d] dark:text-slate-200",
+        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-slate-200/80 bg-[#f8f8fe] text-slate-700 lg:flex dark:border-white/10 dark:bg-[#0c1a3d] dark:text-slate-200",
         collapsed ? "w-[68px]" : "w-[252px]"
       )}
       role="navigation"
       aria-label="Primary"
     >
-      {/* Brand block */}
+      {/* Brand block — SparkFinch-style: diamond logo + wordmark */}
       <Link
         href="/dashboard"
-        className="flex h-16 items-center gap-2.5 border-b border-slate-200/70 px-5 hover:bg-white/40 dark:border-white/5 dark:hover:bg-white/[0.03]"
+        className="flex h-16 items-center gap-3 border-b border-slate-200/70 px-5 hover:bg-white/40 dark:border-white/5 dark:hover:bg-white/[0.03]"
       >
-        <div
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm"
-          style={{
-            background:
-              "linear-gradient(135deg, #7c5cfa 0%, #4f46e5 50%, #ec4899 100%)",
-            boxShadow: "0 4px 12px rgba(124, 92, 250, 0.30)",
-          }}
-        >
-          <ShieldCheck className="h-4 w-4 text-white" />
-        </div>
+        <img
+          src="/app/sarvik-logo.svg"
+          alt=""
+          aria-hidden="true"
+          width={32}
+          height={32}
+          className="shrink-0"
+          style={{ width: 32, height: 32 }}
+        />
         {!collapsed && (
           <div className="leading-tight">
-            <div className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-white">
+            <div
+              className="text-[24px] font-semibold text-slate-900 dark:text-white"
+              style={{
+                fontFamily:
+                  '"Gilroy", "Satoshi", "Inter", system-ui, sans-serif',
+                letterSpacing: "1.2px",
+              }}
+            >
               Sarvik
-            </div>
-            <div className="text-[9px] font-medium uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-              KSP Investigator
             </div>
           </div>
         )}
@@ -192,27 +196,18 @@ function Sidebar({
                         className={cn(
                           "group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all",
                           active
-                            ? "bg-white text-[#4f46e5] shadow-sm dark:bg-white/10 dark:text-white"
-                            : "text-slate-600 hover:bg-white/70 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                            ? "bg-white text-[#6872FF] shadow-[0_2px_8px_-2px_rgba(104,114,255,0.18)] dark:bg-white/10 dark:text-white"
+                            : "text-[#7d8591] hover:bg-white/70 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                         )}
                         aria-current={active ? "page" : undefined}
                         title={collapsed ? item.label[language] : undefined}
                       >
-                        {active && (
-                          <span
-                            className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full"
-                            style={{
-                              background:
-                                "linear-gradient(180deg, #7c5cfa 0%, #4f46e5 100%)",
-                            }}
-                          />
-                        )}
                         <Icon
                           className={cn(
                             "h-4 w-4 shrink-0 transition-colors",
                             active
-                              ? "text-[#7c5cfa]"
-                              : "text-slate-400 group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-200"
+                              ? "text-[#6872FF]"
+                              : "text-[#7d8591] group-hover:text-slate-700 dark:text-slate-400 dark:group-hover:text-slate-200"
                           )}
                         />
                         {!collapsed && (
@@ -228,7 +223,7 @@ function Sidebar({
                                     ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
                                     : item.badge.tone === "success"
                                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
-                                    : "bg-violet-100 text-[#7c5cfa] dark:bg-violet-500/20 dark:text-violet-300"
+                                    : "bg-[#eef0ff] text-[#6872FF] dark:bg-violet-500/20 dark:text-violet-300"
                                 )}
                               >
                                 {item.badge.text}
@@ -265,9 +260,11 @@ function Sidebar({
           )}
         </button>
         {!collapsed && (
-          <div className="mt-2.5 flex items-center justify-center gap-1.5 text-[9px] font-medium uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500">
+          <div
+            className="mt-3 flex items-center justify-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.15em] text-slate-400 shadow-sm dark:border-white/5 dark:bg-white/5 dark:text-slate-500"
+          >
             <span>powered by</span>
-            <span className="spark-gradient-text font-semibold">Catalyst</span>
+            <span className="font-semibold text-[#6872FF]">Catalyst</span>
           </div>
         )}
       </div>
@@ -354,9 +351,28 @@ function MobileNav({
         className="absolute inset-0 bg-slate-900/70 backdrop-blur"
         onClick={onClose}
       />
-      <aside className="absolute left-0 top-0 h-full w-64 overflow-y-auto bg-[#0c1a3d] p-4 text-slate-100">
+      <aside className="absolute left-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto bg-[#0c1a3d] p-4 text-slate-100">
         <div className="mb-4 flex items-center justify-between">
-          <span className="text-sm font-semibold text-white">Sarvik</span>
+          <div className="flex items-center gap-2">
+            <img
+              src="/app/sarvik-logo.svg"
+              alt=""
+              aria-hidden="true"
+              width={28}
+              height={28}
+              style={{ width: 28, height: 28 }}
+            />
+            <span
+              className="text-base font-semibold text-white"
+              style={{
+                fontFamily:
+                  '"Gilroy", "Satoshi", "Inter", system-ui, sans-serif',
+                letterSpacing: "1px",
+              }}
+            >
+              Sarvik
+            </span>
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -481,13 +497,13 @@ function TopBar({
         className="-ml-1 rounded-md border border-slate-200 p-1.5 lg:hidden dark:border-white/10"
         aria-label="Open navigation"
       >
-        <ChevronsRight className="h-4 w-4" />
+        <Menu className="h-4 w-4" />
       </button>
 
       {/* Breadcrumbs / page title */}
       <div className="flex min-w-0 flex-col leading-tight">
         <nav
-          className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400"
+          className="hidden items-center gap-1 text-[11px] text-slate-500 sm:flex dark:text-slate-400"
           aria-label="Breadcrumb"
         >
           {crumbs.map((c, i) => (
@@ -590,7 +606,7 @@ function TopBar({
           aria-label="Notifications"
         >
           <Bell className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Notification</span>
+          <span className="hidden md:inline">Notification</span>
           <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-70" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
@@ -750,7 +766,7 @@ export function AppShell({
           pageSubtitle={subtitle}
         />
 
-        <main className="flex-1 px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+        <main className="flex-1 px-3 pb-8 pt-3 sm:px-6 sm:pt-4 lg:px-8">
           {/* Page header strip (actions row) */}
           {(actions || pageHeaderExtra) && (
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -280,7 +280,7 @@ export function ChatMessage({
         onTouchCancel={cancelLongPress}
         onTouchMove={cancelLongPress}
         className={cn(
-          "chat-message-enter group relative max-w-[82%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed transition-colors",
+          "chat-message-enter group relative max-w-[88%] sm:max-w-[82%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed transition-colors",
           isUser
             ? "rounded-br-md bg-white text-slate-800 shadow-[0_2px_8px_-2px_rgba(15,23,42,0.10)] ring-1 ring-slate-200/80"
             : "rounded-bl-md bg-[#F1F1F4] text-slate-800 dark:bg-white/8 dark:text-slate-100",

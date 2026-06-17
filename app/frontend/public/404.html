@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sarvik — redirecting…</title>
+  <meta name="robots" content="noindex">
+  <style>
+    html,body{margin:0;padding:0;background:#f8f8fe;color:#1f2937;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem}
+    .spinner{width:32px;height:32px;border:3px solid #d6d9ff;border-top-color:#6872FF;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .msg{font-size:13px;color:#6b7280}
+    .fallback{margin-top:1.25rem;display:none;font-size:13px}
+    .fallback a{color:#6872FF;text-decoration:none;font-weight:600}
+  </style>
+  <script>
+    /*
+     * Catalyst Web Client Hosting does not auto-resolve extension-less URLs to
+     * the equivalent .html file emitted by Next.js static export. When the
+     * user navigates to e.g. /app/dashboard/investigate, Catalyst 404s and
+     * serves this page. We sniff the requested path and bounce them to the
+     * .html sibling — preserving query string and hash — which exists on disk.
+     *
+     * Routes that don't have a .html sibling fall through to the visible
+     * "Page not found" fallback below.
+     */
+    (function () {
+      try {
+        var p = window.location.pathname || "";
+        // Already pointed at an .html, asset, or _next chunk? Don't loop.
+        if (/\.(html|js|css|svg|png|jpg|jpeg|gif|webp|ico|map|json|txt|woff2?)$/i.test(p)) return;
+        if (p.indexOf("/_next/") !== -1) return;
+        // Strip trailing slash so /dashboard/investigate/ → /dashboard/investigate
+        var clean = p.replace(/\/+$/, "");
+        if (!clean) clean = "/index";
+        var target = clean + ".html" + (window.location.search || "") + (window.location.hash || "");
+        // Avoid an infinite loop if the .html itself 404s.
+        if (sessionStorage.getItem("sarvik-404-from") === target) return;
+        sessionStorage.setItem("sarvik-404-from", target);
+        window.location.replace(target);
+      } catch (e) {
+        /* fall through to the visible message */
+      }
+      // If we reach here after 250ms, show the fallback UI.
+      setTimeout(function () {
+        var el = document.getElementById("fallback");
+        if (el) el.style.display = "block";
+      }, 250);
+    })();
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="spinner" role="status" aria-label="Redirecting"></div>
+    <div class="msg">Loading Sarvik…</div>
+    <div id="fallback" class="fallback">
+      <a href="/app/index.html">← Back to Sarvik home</a>
+    </div>
+  </div>
+</body>
+</html>
