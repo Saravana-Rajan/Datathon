@@ -1,11 +1,12 @@
 {
   "deployment": {
     "name": "rag-retriever",
-    "stack": "python3.11",
+    "type": "advancedio",
+    "stack": "python_3_9",
     "memory": 512,
     "timeout": 20
   },
   "execution": {
-    "main": "index.handler"
+    "main": "index.py"
   }
 }

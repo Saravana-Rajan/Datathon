@@ -1,11 +1,12 @@
 {
   "deployment": {
     "name": "pdf-exporter",
-    "stack": "python3.11",
+    "type": "advancedio",
+    "stack": "python_3_9",
     "memory": 1024,
     "timeout": 60
   },
   "execution": {
-    "main": "index.handler"
+    "main": "index.py"
   }
 }

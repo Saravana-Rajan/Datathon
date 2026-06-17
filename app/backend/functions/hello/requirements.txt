@@ -1,1 +1,1 @@
-zcatalyst-sdk>=1.5.0
+zcatalyst-sdk>=1.3.0

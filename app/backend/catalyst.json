@@ -1,53 +1,48 @@
 {
   "project_id": "47060000000020024",
-  "org_id": "60074155874",
-  "project_name": "Sarvik",
+  "project": {
+    "id": "47060000000020024",
+    "org_id": "60074155874",
+    "project_name": "Sarvik",
+    "region": "IN"
+  },
+  "functions": {
+    "source": "functions",
+    "targets": [
+      "hello",
+      "intent-router",
+      "sql-generator",
+      "cypher-generator",
+      "rag-retriever",
+      "synthesizer",
+      "audit-logger",
+      "pdf-exporter",
+      "orchestrator"
+    ]
+  },
+  "client": {
+    "source": "../frontend/out",
+    "target": "yaksha-frontend"
+  },
   "internal_codename": "ksp-saathi-backend",
-  "region": "IN",
   "data_center": "console.catalyst.zoho.in",
   "environment": "Development",
   "console_url": "https://console.catalyst.zoho.in/baas/60074155874/project/47060000000020024/Development",
   "features": {
-    "functions": {
-      "enabled": true,
-      "directory": "functions"
-    },
-    "datastore": {
-      "enabled": true
-    },
-    "nosql": {
-      "enabled": true
-    },
-    "stratus": {
-      "enabled": true
-    },
-    "cache": {
-      "enabled": true
-    },
-    "web-client-hosting": {
-      "enabled": true
-    },
-    "authentication": {
-      "enabled": true
-    },
-    "smartbrowz": {
-      "enabled": true
-    },
-    "zia": {
-      "enabled": true
-    },
-    "quickml": {
-      "enabled": true
-    },
-    "api-gateway": {
-      "enabled": true
-    },
-    "pipelines": {
-      "enabled": true
-    }
+    "datastore": { "enabled": true },
+    "nosql": { "enabled": true },
+    "stratus": { "enabled": true },
+    "cache": { "enabled": true },
+    "web-client-hosting": { "enabled": true },
+    "authentication": { "enabled": true },
+    "smartbrowz": { "enabled": true },
+    "zia": { "enabled": true },
+    "quickml": { "enabled": true },
+    "api-gateway": { "enabled": true },
+    "pipelines": { "enabled": true }
   },
   "stacks": {
     "python": "3.11"
   },
-  "notes": "Circuits NOT in India DC — orchestration done via the Python `orchestrator` function instead. See functions/orchestrator/README.md."
+  "notes": "Circuits NOT in India DC — orchestration done via the Python 'orchestrator' function instead. See functions/orchestrator/README.md."
 }

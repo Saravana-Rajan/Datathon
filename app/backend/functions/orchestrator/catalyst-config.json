@@ -1,42 +1,12 @@
 {
   "deployment": {
     "name": "orchestrator",
-    "stack": "python3.11",
-    "type": "AdvancedIO",
+    "type": "advancedio",
+    "stack": "python_3_9",
     "memory": 1024,
-    "timeout": 60,
-    "description": "KSP Saathi (Sarvik) BRAIN — Python orchestrator that replaces Catalyst Circuits (not available in India DC). Fans out intent-router -> SQL/Cypher/RAG/predictive in parallel via asyncio, then proxies the synthesizer SSE stream and fires an audit log.",
-    "main": "index.handler",
-    "concurrency": 8,
-    "environment_variables": {
-      "LOG_LEVEL": "INFO",
-      "ORCH_TOTAL_TIMEOUT_S": "30",
-      "ORCH_TOOL_TIMEOUT_S": "8",
-      "ORCH_ROUTER_TIMEOUT_S": "5",
-      "ORCH_SYNTH_TIMEOUT_S": "20",
-      "ORCH_AUDIT_TIMEOUT_S": "3",
-      "ORCH_RETRY_ATTEMPTS": "2",
-      "ORCH_RETRY_BACKOFF_MS": "250",
-      "CATALYST_API_BASE": "https://ksp-saathi-60067540097.catalystserverless.in/server"
-    },
-    "required_secrets": [
-      "CATALYST_TOKEN",
-      "FN_INTENT_ROUTER_URL",
-      "FN_SQL_GENERATOR_URL",
-      "FN_CYPHER_GENERATOR_URL",
-      "FN_RAG_RETRIEVER_URL",
-      "FN_PREDICTIVE_SERVICE_URL",
-      "FN_SYNTHESIZER_URL",
-      "FN_AUDIT_LOGGER_URL"
-    ]
+    "timeout": 60
   },
   "execution": {
-    "main": "index.handler"
-  },
-  "http": {
-    "method": ["POST"],
-    "path": "/orchestrator",
-    "response_type": "stream",
-    "content_type": "text/event-stream"
+    "main": "index.py"
   }
 }

@@ -167,6 +167,61 @@ C:\Users\sarav\Datathon 2026\
 4. **Check task tracker** (`TaskList`) — see what's in-progress
 5. **Don't re-ask** locked decisions — append to Decision Log if changing
 
+## Catalyst gotchas (HARD-WON, do not re-discover)
+
+These were learned the painful way during the first deploy. **Stick to these literals exactly.**
+
+### catalyst-config.json schema (per-function)
+```json
+{
+  "deployment": {
+    "name": "<function-name>",
+    "type": "advancedio",         // lowercase, one word — NOT "AdvancedIO"
+    "stack": "python_3_9",         // ONLY valid Python literal — NOT python311, NOT python3.11
+    "memory": 256,
+    "timeout": 10
+  },
+  "execution": {
+    "main": "index.py"             // file NAME — NOT "index.handler"
+  }
+}
+```
+
+### Project-level catalyst.json schema (in app/backend/)
+Functions need a `functions.targets` array (not `features.functions.enabled`):
+```json
+{
+  "project_id": "47060000000020024",
+  "functions": {
+    "source": "functions",
+    "targets": ["hello", "intent-router", "..."]
+  }
+}
+```
+
+### Python runtime facts
+- **Catalyst Functions ONLY support Python 3.9** (not 3.10/3.11/3.12 — those work only in AppSail with `app-config.json`)
+- Local Python 3.9 binary REQUIRED for CLI packaging:
+  - Windows install: `winget install --id Python.Python.3.9 --silent`
+  - Then: `catalyst config:set python3_9.bin=/c/Users/sarav/AppData/Local/Programs/Python/Python39/python.exe`
+- CLI validates `python --version` output starts with `3.9` — can't spoof with 3.11
+
+### Package version caps
+- `zcatalyst-sdk` max version on PyPI = **1.3.0** (do NOT use `>=1.5.0` — it doesn't exist)
+- `typing-extensions` cap = `~=4.12.1` (constrained by zcatalyst-sdk)
+
+### Active deployment URLs (Sarvik)
+All 9 functions live at: `https://sarvik-60074155874.development.catalystserverless.in/server/<function-name>/`
+- hello · intent-router · sql-generator · cypher-generator · rag-retriever
+- synthesizer · audit-logger · pdf-exporter · orchestrator
+
+### CLI quirks
+- `catalyst project:use <PID>` is silent — writes `.catalystrc` in cwd
+- `catalyst deploy --only functions:hello` deploys one function
+- `catalyst deploy --only functions` deploys ALL listed targets
+- Transient pip failures happen — just retry the specific function
+- All commands need `cd app/backend` first (or pass `-p Sarvik`)
+
 ## What to NOT do
 
 - ❌ Don't mention Sarvam.ai as a recommendation (replaced by Gemini Live API)
